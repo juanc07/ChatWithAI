@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/homeScreenFragment"
+        android:title="Home"
+        android:icon="@drawable/ic_home"/>
+    <item
+        android:id="@+id/activityScreenFragment"
+        android:title="Activity"
+        android:icon="@drawable/ic_baseline_local_activity_24"/>
+    <item
+        android:id="@+id/paymentScreenFragment"
+        android:title="Payment"
+        android:icon="@drawable/ic_baseline_payment_24"/>
+    <item
+        android:id="@+id/messageScreenFragment"
+        android:title="Messages"
+        android:icon="@drawable/ic_baseline_chat_24"/>
+    <item
+        android:id="@+id/accountScreenFragment"
+        android:title="Account"
+        android:icon="@drawable/ic_baseline_account_circle_24"/>
+</menu>

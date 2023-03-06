@@ -1,47 +1,64 @@
-package com.thinkbloxph.chatwithai
+package com.thinkbloxph.chatwithai.screen
 
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.thinkbloxph.chatwithai.*
+import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
+import com.thinkbloxph.chatwithai.databinding.FragmentChatScreenBinding
+import com.thinkbloxph.chatwithai.helper.UIHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class ChatActivity : AppCompatActivity() {
-    private lateinit var messageListRecyclerView: RecyclerView
-    private lateinit var messageInputField: EditText
-    private lateinit var sendButton: Button
-    private lateinit var messageListAdapter: MessageListAdapter
+private const val INNER_TAG = "ChatScreenFragment"
+class ChatScreenFragment: Fragment() {
+    private var _binding: FragmentChatScreenBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var progressDialog: CustomCircularProgressIndicator
+    private lateinit var messageListAdapter: MessageListAdapter
+    private lateinit var sendButton: Button
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_chat)
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _binding = FragmentChatScreenBinding.inflate(inflater, container, false)
 
-        messageListRecyclerView = findViewById(R.id.message_list_recycler_view)
-        messageInputField = findViewById(R.id.message_input_field)
-        sendButton = findViewById(R.id.send_button)
-        progressDialog = CustomCircularProgressIndicator(this)
 
-        messageListAdapter = MessageListAdapter(messageListRecyclerView)
-        messageListRecyclerView.adapter = messageListAdapter
-        messageListRecyclerView.layoutManager = LinearLayoutManager(this)
+        progressDialog = CustomCircularProgressIndicator(requireActivity())
+        messageListAdapter = MessageListAdapter(binding.messageListRecyclerView)
+        binding.messageListRecyclerView.adapter = messageListAdapter
+        binding.messageListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // Set other view references using binding
+        val messageInputField = binding.messageInputField
+        sendButton = binding.sendButton
+
+        UIHelper.initInstance(this.requireActivity(), this)
+        UIHelper.getInstance()?.init()
+
+        // Access other views using binding here
         sendButton.setOnClickListener {
+            // Send button click logic here
             val messageText = messageInputField.text.toString()
             if (!messageText.isNullOrEmpty() && !messageText.isBlank()) {
                 sendButton.isEnabled = false
                 val message = ChatMessage(messageText, "me")
                 messageListAdapter.addMessage(message)
-                messageInputField.text.clear()
+                messageInputField.text?.clear()
                 progressDialog.show()
 
 
@@ -54,7 +71,7 @@ class ChatActivity : AppCompatActivity() {
                 }, 2000) // delay AI response by 2 seconds*/
 
 
-                val openAI = OpenAIAPI(lifecycleScope,applicationContext)
+                val openAI = OpenAIAPI(lifecycleScope,requireContext())
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val messages = openAI.getCompletion(messageText)
@@ -74,7 +91,7 @@ class ChatActivity : AppCompatActivity() {
                             } else {
                                 // The messages are empty
                                 // Handle this case here
-                                MaterialAlertDialogBuilder(this@ChatActivity)
+                                MaterialAlertDialogBuilder(requireContext())
                                     .setTitle("Oops!")
                                     .setMessage("Something went wrong. Please try again later.")
                                     .setPositiveButton("OK") { dialog, _ ->
@@ -87,7 +104,7 @@ class ChatActivity : AppCompatActivity() {
                     } catch (e: Exception) {
                         // Show dialog to notify user of error
                         withContext(Dispatchers.Main) {
-                            MaterialAlertDialogBuilder(this@ChatActivity)
+                            MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Oops!")
                                 .setMessage("Something went wrong. Please try again later.")
                                 .setPositiveButton("OK") { dialog, _ ->
@@ -108,10 +125,13 @@ class ChatActivity : AppCompatActivity() {
                 showDialog("Hey Buddy","Please enter a message!")
             }
         }
+
+        // Inflate the layout for this fragment
+        return binding.root
     }
 
     private fun showDialog(title:String, message:String){
-        MaterialAlertDialogBuilder(this@ChatActivity)
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("OK") { dialog, _ ->
@@ -121,8 +141,6 @@ class ChatActivity : AppCompatActivity() {
             .show()
     }
 
-
-
     private fun generateRandomString(): String {
         val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
         return (1..10)
@@ -130,5 +148,24 @@ class ChatActivity : AppCompatActivity() {
             .map(charPool::get)
             .joinToString("")
     }
-}
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        binding?.apply {
+            lifecycleOwner = viewLifecycleOwner
+            chatScreenFragment = this@ChatScreenFragment
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // hide the action back button
+        //UIHelper.getInstance().showHideBackButton(true)
+        UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
+    }
+
+    fun goToChat() {
+        //findNavController().navigate(R.id.action_loginScreenFragment_to_chatActivity)
+    }
+}

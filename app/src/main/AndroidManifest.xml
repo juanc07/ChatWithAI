@@ -12,7 +12,8 @@
         android:theme="@style/Theme.ChatWithAI"
         tools:targetApi="31">
         <activity
-            android:name=".ChatActivity"
+            android:name=".MainActivity"
+            android:theme="@style/Theme.ChatWithAI.NoActionBar"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

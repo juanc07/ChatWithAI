@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginScreenFragment">
+
+    <activity
+        android:id="@+id/chatActivity"
+        android:name="com.thinkbloxph.chatwithai.ChatActivity"
+        android:label="@string/app_name_inner"
+        tools:layout="@layout/activity_chat" />
+    <fragment
+        android:id="@+id/loginScreenFragment"
+        android:name="com.thinkbloxph.chatwithai.screen.LoginScreenFragment"
+        android:label="@string/app_name_inner">
+        <action
+            android:id="@+id/action_loginScreenFragment_to_chatScreenFragment"
+            app:destination="@id/chatScreenFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/chatScreenFragment"
+        android:name="com.thinkbloxph.chatwithai.screen.ChatScreenFragment"
+        android:label="@string/app_name_inner" />
+</navigation>
