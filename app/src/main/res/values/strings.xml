@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ChatWithAI</string>
+    <string name="message_input_hint">Type your message</string>
+    <string name="send_button_text">Send</string>
+</resources>

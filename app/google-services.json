@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "824771532669",
+    "project_id": "chatwithai-f848d",
+    "storage_bucket": "chatwithai-f848d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:824771532669:android:ffc1d5597ce9a3e1ea9e14",
+        "android_client_info": {
+          "package_name": "com.thinkbloxph.chatwithai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "824771532669-mnu0poodojgco7t760t3rs807pucmtal.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.thinkbloxph.chatwithai",
+            "certificate_hash": "494e6f07f272fc24b1cdcc0f2e6a2a2fe35fdd4d"
+          }
+        },
+        {
+          "client_id": "824771532669-0icg6140cu916b4rttickv4qcv206ntq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDT6mWJkyV7iPTJOGzsRQKJKm51tiCmUKo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "824771532669-0icg6140cu916b4rttickv4qcv206ntq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
