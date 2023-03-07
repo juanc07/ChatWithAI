@@ -13,7 +13,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.textfield.TextInputEditText
 import com.thinkbloxph.chatwithai.*
 import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
 import com.thinkbloxph.chatwithai.databinding.FragmentChatScreenBinding
@@ -30,6 +33,7 @@ class ChatScreenFragment: Fragment() {
     private lateinit var progressDialog: CustomCircularProgressIndicator
     private lateinit var messageListAdapter: MessageListAdapter
     private lateinit var sendButton: Button
+    private lateinit var messageInputField: TextInputEditText
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,7 +48,7 @@ class ChatScreenFragment: Fragment() {
         binding.messageListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         // Set other view references using binding
-        val messageInputField = binding.messageInputField
+        messageInputField = binding.messageInputField
         sendButton = binding.sendButton
 
         UIHelper.initInstance(this.requireActivity(), this)
@@ -87,7 +91,7 @@ class ChatScreenFragment: Fragment() {
                                     val aiResponse = ChatMessage(firstMessage, "AI")
                                     messageListAdapter.addMessage(aiResponse)
                                     sendButton.isEnabled = true
-                                }, 2000) // delay AI response by 2 seconds
+                                }, 500) // delay AI response by 2 seconds
                             } else {
                                 // The messages are empty
                                 // Handle this case here
@@ -149,6 +153,25 @@ class ChatScreenFragment: Fragment() {
             .joinToString("")
     }
 
+    private fun showHideBottomNavigation(isShow: Boolean) {
+        val bottomNav =
+            requireActivity().findViewById<BottomNavigationView>(R.id.bottomNavigationView)
+        if (isShow) {
+            bottomNav?.visibility = View.VISIBLE
+        } else {
+            bottomNav?.visibility = View.GONE
+        }
+    }
+
+    private fun showHideSideNavigation(isShow: Boolean) {
+        val sideNavView = requireActivity().findViewById<NavigationView>(R.id.nav_view)
+        if (isShow) {
+            sideNavView?.visibility = View.VISIBLE
+        } else {
+            sideNavView?.visibility = View.GONE
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -163,9 +186,15 @@ class ChatScreenFragment: Fragment() {
         // hide the action back button
         //UIHelper.getInstance().showHideBackButton(true)
         UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
+        showHideBottomNavigation(true)
+        showHideSideNavigation(true)
     }
 
     fun goToChat() {
         //findNavController().navigate(R.id.action_loginScreenFragment_to_chatActivity)
+    }
+
+    fun clearInput(){
+        messageInputField.text?.clear()
     }
 }

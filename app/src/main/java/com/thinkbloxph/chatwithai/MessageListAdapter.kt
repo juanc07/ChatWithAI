@@ -39,6 +39,10 @@ class MessageListAdapter(private val messageListRecyclerView: RecyclerView) : Re
         messageListRecyclerView.scrollToPosition(messageList.size - 1)
     }
 
+    fun clearMessages() {
+        messageList.clear()
+    }
+
     companion object {
         const val USER_MESSAGE_TYPE = 1
         const val AI_MESSAGE_TYPE = 2

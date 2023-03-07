@@ -43,10 +43,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="8dp"
+            app:endIconMode="clear_text"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/send_button">
+            app:layout_constraintEnd_toStartOf="@id/send_button"
+            app:layout_constraintHorizontal_weight="0.8"
+            app:layout_constraintStart_toStartOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/message_input_field"
@@ -54,21 +56,25 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/message_input_hint"
                 android:inputType="text"
-                android:maxLines="1"/>
+                android:maxLines="1" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/send_button"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:text="@string/send_button_text"
-            android:textAllCaps="false"
+            android:layout_gravity="center"
+            android:layout_marginEnd="8dp"
+            app:icon="@drawable/baseline_send_24"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
             app:layout_constraintBottom_toBottomOf="@id/message_input_layout"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_weight="0.35"
             app:layout_constraintStart_toEndOf="@+id/message_input_layout"
             app:layout_constraintTop_toTopOf="@id/message_input_layout" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

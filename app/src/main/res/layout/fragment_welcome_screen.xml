@@ -2,12 +2,12 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.thinkbloxph.pinoymassageapp.screen.LoginScreenFragment">
+    tools:context="com.thinkbloxph.pinoymassageapp.screen.WelcomeScreenFragment">
 
     <data>
         <variable
-            name="loginScreenFragment"
-            type="com.thinkbloxph.chatwithai.screen.LoginScreenFragment" />
+            name="welcomeScreenFragment"
+            type="com.thinkbloxph.chatwithai.screen.WelcomeScreenFragment" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -16,11 +16,11 @@
 
         <Button
             android:id="@+id/button3"
+            android:onClick="@{() -> welcomeScreenFragment.goToLogin()}"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="50dp"
-            android:onClick="@{() -> loginScreenFragment.goToChat()}"
-            android:text="@string/start_chat"
+            android:text="@string/sign_up"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
