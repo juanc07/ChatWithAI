@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.thinkbloxph.chatwithai.MainActivity
 import com.thinkbloxph.chatwithai.R
 import com.thinkbloxph.chatwithai.databinding.FragmentWelcomeScreenBinding
 import com.thinkbloxph.chatwithai.helper.UIHelper
@@ -42,9 +43,10 @@ class WelcomeScreenFragment: Fragment() {
         super.onStart()
         // hide the action back button
         //UIHelper.getInstance().showHideBackButton(false)
+        UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
     }
 
     fun goToLogin() {
-        findNavController().navigate(R.id.action_welcomeScreenFragment_to_loginScreenFragment)
+        findNavController().navigate(R.id.action_welcomeScreenFragment_to_chatScreenFragment)
     }
 }

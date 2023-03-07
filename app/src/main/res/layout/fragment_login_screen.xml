@@ -6,6 +6,9 @@
 
     <data>
         <variable
+            name="userViewModel"
+            type="com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel" />
+        <variable
             name="loginScreenFragment"
             type="com.thinkbloxph.chatwithai.screen.LoginScreenFragment" />
     </data>
@@ -15,12 +18,18 @@
         android:layout_height="match_parent">
 
         <Button
-            android:id="@+id/button3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="50dp"
-            android:onClick="@{() -> loginScreenFragment.goToChat()}"
-            android:text="@string/start_chat"
+            android:id="@+id/login_with_google"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="64dp"
+            android:onClick="@{() -> loginScreenFragment.continueWithGoogle()}"
+            android:text="Continue with Google"
+            android:textSize="12sp"
+            app:cornerRadius="20dp"
+            app:icon="@drawable/google_192"
+            app:iconTintMode="multiply"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
