@@ -29,5 +29,8 @@
         <action
             android:id="@+id/action_welcomeScreenFragment_to_chatScreenFragment"
             app:destination="@id/chatScreenFragment" />
+        <action
+            android:id="@+id/action_welcomeScreenFragment_to_loginScreenFragment"
+            app:destination="@id/loginScreenFragment" />
     </fragment>
 </navigation>

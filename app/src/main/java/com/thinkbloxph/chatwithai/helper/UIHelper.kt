@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.text.method.LinkMovementMethod
 import android.util.Log
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.ViewDataBinding
@@ -13,6 +14,8 @@ import com.google.android.material.textview.MaterialTextView
 import com.thinkbloxph.chatwithai.CustomCircularProgressIndicator
 import com.thinkbloxph.chatwithai.TAG
 import androidx.appcompat.widget.Toolbar
+import androidx.navigation.NavController
+import androidx.navigation.ui.NavigationUI
 import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
 
 

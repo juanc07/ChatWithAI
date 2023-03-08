@@ -30,6 +30,7 @@ class LoginScreenFragment: Fragment() {
 
     private lateinit var firebaseAuth: FirebaseAuth
     private val firebaseHelper = FirebaseHelper()
+    private val userDb = UserDatabase()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -63,13 +64,14 @@ class LoginScreenFragment: Fragment() {
             loginScreenFragment = this@LoginScreenFragment
         }
 
-        val firebaseUser = firebaseAuth.currentUser
+        val currentUser = firebaseAuth.currentUser
 
-        if (firebaseUser != null) {
+        if (currentUser != null) {
+            UIHelper.getInstance().showLoading()
             var currentProvider: String? = null
-            if (firebaseUser.providerData?.size!! > 0) {
+            if (currentUser.providerData?.size!! > 0) {
                 currentProvider =
-                    firebaseUser.providerData.get(firebaseUser.providerData.size - 1).providerId
+                    currentUser.providerData.get(currentUser.providerData.size - 1).providerId
                 Log.v(TAG, "[${INNER_TAG}]: currentProvider ${currentProvider}")
             }
 
@@ -79,20 +81,35 @@ class LoginScreenFragment: Fragment() {
                 val providerId = firebaseHelper.getProviderId(currentProvider)
                 if (!providerId.isNullOrEmpty()) {
                     _userViewModel.setProviderId(providerId)
+                    Log.d(TAG, "[${INNER_TAG}]: providerId is set successfully")
 
-                    firebaseHelper.getIdToken(
+                    /*firebaseHelper.getIdToken(
                         successCallback = { mobileNumber, idToken, email ->
                             if (email != null && !idToken.isNullOrEmpty()) {
                                 Log.d(TAG, "[${INNER_TAG}]: Auto External Login mobileNumber: $mobileNumber")
                                 Log.d(TAG, "[${INNER_TAG}]: Auto External Login email: $email")
                                 Log.d(TAG, "[${INNER_TAG}]: Auto External Login idToken : $idToken")
-                                findNavController().navigate(R.id.action_loginScreenFragment_to_welcomeScreenFragment)
+
                             }
                         }, failedCallback = {
                             // show some dialog here login failed
                             Log.d(TAG, "[${INNER_TAG}]: Auto External get initial IdToken failed")
                             UIHelper.getInstance().hideLoading()
-                        })
+                        })*/
+
+                    Log.d(TAG, "[${INNER_TAG}]: check uid: ${currentUser.uid}")
+
+                    userDb.checkIfDataExists(currentUser.uid, callback = {
+                        exists->
+                            if(exists){
+                                loadUserData(currentUser.uid)
+                                Log.d(TAG, "[${INNER_TAG}]: current user exist and user is in database")
+                            }else{
+                                Log.d(TAG, "[${INNER_TAG}]: current user exist but user is not in database")
+
+                        }
+                    })
+
                 }
             }
         }
@@ -105,6 +122,7 @@ class LoginScreenFragment: Fragment() {
     }
 
     fun continueWithGoogle() {
+        var providerId: String? = null
         UIHelper.getInstance().showLoading()
         GoogleApi.getInstance()?.login(successCallback = { googleSignInAccount, firebaseUser ->
             UIHelper.getInstance().hideLoading()
@@ -112,7 +130,7 @@ class LoginScreenFragment: Fragment() {
             Log.d(TAG, "[${INNER_TAG}]: LoginGoogle success!")
 
             if (firebaseUser != null) {
-                val providerId = firebaseHelper.getProviderId(Provider.GOOGLE)
+                providerId = firebaseHelper.getProviderId(Provider.GOOGLE)
                 if (providerId != null) {
                     Log.d(TAG, "[${INNER_TAG}]:Google ID: $providerId")
                 }
@@ -140,9 +158,21 @@ class LoginScreenFragment: Fragment() {
                 Log.d(TAG, "Check givenName: ${givenName}")
                 Log.d(TAG, "Check familyName: ${familyName}")
                 Log.d(TAG, "Check imageUrl: ${imageUrl}")
-                //val userDb = UserDatabase()
-                //userDb.saveCurrentUserToDatabase()
-                findNavController().navigate(R.id.action_loginScreenFragment_to_welcomeScreenFragment)
+
+                var currentUser = firebaseAuth.currentUser;
+                if(currentUser!=null){
+
+                    userDb.checkIfDataExists(currentUser.uid, callback = {
+                            exists->
+                        if(exists){
+                            loadUserData(currentUser.uid)
+                        }else{
+                            providerId?.let { userDb.saveCurrentUserToDatabase(it) }
+                            // fix this save method from userDB use callback
+                            loadUserData(currentUser.uid)
+                        }
+                    })
+                }
             } else {
                 Log.d(TAG, "[${INNER_TAG}]: LoginGoogle success but googleSignInAccount is null")
             }
@@ -153,6 +183,35 @@ class LoginScreenFragment: Fragment() {
             )
             Log.d(TAG, "[${INNER_TAG}]: loginGoogle Failed!")
         })
+    }
+
+    fun loadUserData(uid:String){
+        userDb.loadUserData(uid) { user ->
+            if (user != null) {
+                // Do something with the loaded user data
+                user.googleId?.let { googleId-> _userViewModel.setGoogleUserId(googleId) }
+                user.facebookId?.let { facebookId-> _userViewModel.setFacebookUserId(facebookId) }
+                user.displayName?.let { displayName-> _userViewModel.setDisplayName(displayName) }
+                user.phoneNumber?.let { phoneNumber-> _userViewModel.setPhoneNumber(phoneNumber) }
+                user.email?.let { email-> _userViewModel.setEmail(email) }
+                user.credit?.let { credit->_userViewModel.setCredit(credit)}
+                user.isSubscribed?.let { isSubscribed-> _userViewModel.setIsSubscribed(isSubscribed) }
+                user.createdDate?.let { createdDate-> _userViewModel.setCreatedDate(createdDate) }
+
+                Log.d(TAG, "[${INNER_TAG}]: check displayName: ${_userViewModel.getDisplayName()}}!")
+                Log.d(TAG, "[${INNER_TAG}]: check credit: ${_userViewModel.getCredit()}}!")
+                Log.d(TAG, "[${INNER_TAG}]: loadUserData success!")
+
+                UIHelper.getInstance().hideLoading()
+                findNavController().navigate(R.id.action_loginScreenFragment_to_welcomeScreenFragment)
+            } else {
+                // No data exists for the given UID
+                UIHelper.getInstance().hideLoading()
+                UIHelper.getInstance().showDialogMessage(
+                    getString(R.string.something_went_wrong), getString(R.string.dialog_ok)
+                )
+            }
+        }
     }
 
     fun goToChat() {

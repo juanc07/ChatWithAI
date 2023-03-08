@@ -6,6 +6,9 @@
 
     <data>
         <variable
+            name="userViewModel"
+            type="com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel" />
+        <variable
             name="welcomeScreenFragment"
             type="com.thinkbloxph.chatwithai.screen.WelcomeScreenFragment" />
     </data>
@@ -16,11 +19,24 @@
 
         <Button
             android:id="@+id/button3"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            app:layout_constraintWidth_percent="0.5"
+            android:layout_marginBottom="16dp"
             android:onClick="@{() -> welcomeScreenFragment.goToLogin()}"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="50dp"
             android:text="@string/start_chat"
+            app:layout_constraintBottom_toTopOf="@+id/signout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Button
+            android:id="@+id/signout"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            app:layout_constraintWidth_percent="0.5"
+            android:layout_marginBottom="64dp"
+            android:onClick="@{() -> welcomeScreenFragment.signout()}"
+            android:text="@string/sign_out"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
@@ -29,13 +45,24 @@
             android:id="@+id/imageView3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/_1024x1024_chat_with_ai"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:src="@drawable/_256x256_chat_with_ai_no_bg"
+            app:layout_constraintBottom_toTopOf="@+id/welcomebackText"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_bias="0.50"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="1.0" />
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/welcomebackText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toTopOf="@+id/button3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.497"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView3" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
