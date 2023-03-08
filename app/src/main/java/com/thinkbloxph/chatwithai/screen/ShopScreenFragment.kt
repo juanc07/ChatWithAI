@@ -22,6 +22,7 @@ import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentShopScreenBinding
 import com.thinkbloxph.chatwithai.databinding.FragmentWelcomeScreenBinding
+import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
 
@@ -34,6 +35,7 @@ class ShopScreenFragment: Fragment() {
 
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var creditText:TextView
+    private lateinit var inAppPurchaseManager: InAppPurchaseManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,6 +48,19 @@ class ShopScreenFragment: Fragment() {
 
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
+
+        inAppPurchaseManager = InAppPurchaseManager(requireActivity())
+        inAppPurchaseManager.setOnPurchasesUpdatedListener { purchases ->
+            // Handle the list of purchases
+            for (purchase in purchases) {
+                // Handle the purchase here
+                val productId = purchase.skus
+                val purchaseToken = purchase.purchaseToken
+
+                Log.v(TAG, "[${INNER_TAG}]: productId ${productId}}")
+                Log.v(TAG, "[${INNER_TAG}]: purchaseToken ${purchaseToken}}")
+            }
+        }
 
         // Inflate the layout for this fragment
         return binding.root
@@ -123,7 +138,8 @@ class ShopScreenFragment: Fragment() {
         findNavController().navigate(R.id.action_welcomeScreenFragment_to_loginScreenFragment)
     }
 
-    fun buyCredit(){
+    fun buyCreditTen(){
         Log.v(TAG, "[${INNER_TAG}]: buyCredit!")
+        inAppPurchaseManager.purchase("cwai_credit_10")
     }
 }
