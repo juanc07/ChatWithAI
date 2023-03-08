@@ -17,30 +17,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/button3"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            app:layout_constraintWidth_percent="0.5"
-            android:layout_marginBottom="16dp"
-            android:onClick="@{() -> welcomeScreenFragment.goToLogin()}"
-            android:text="@string/start_chat"
-            app:layout_constraintBottom_toTopOf="@+id/signout"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <Button
-            android:id="@+id/signout"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            app:layout_constraintWidth_percent="0.5"
-            android:layout_marginBottom="64dp"
-            android:onClick="@{() -> welcomeScreenFragment.signout()}"
-            android:text="@string/sign_out"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
         <ImageView
             android:id="@+id/imageView3"
             android:layout_width="wrap_content"
@@ -57,13 +33,67 @@
             android:id="@+id/welcomebackText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="64dp"
+            android:layout_marginBottom="16dp"
+            android:textColor="#BD770F"
             android:textSize="20sp"
-            app:layout_constraintBottom_toTopOf="@+id/button3"
+            app:layout_constraintBottom_toTopOf="@+id/creditText"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.497"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imageView3" />
+
+        <TextView
+            android:id="@+id/creditText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="64dp"
+            android:textColor="#FFC107"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toTopOf="@+id/startChatBtn"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.497"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/welcomebackText" />
+
+        <Button
+            android:id="@+id/startChatBtn"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginBottom="8dp"
+            android:onClick="@{() -> welcomeScreenFragment.goToLogin()}"
+            android:text="@string/start_chat"
+            app:layout_constraintBottom_toTopOf="@+id/buyCreditBtn"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/creditText"
+            app:layout_constraintWidth_percent="0.5" />
+
+        <Button
+            android:id="@+id/buyCreditBtn"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:onClick="@{() -> welcomeScreenFragment.buyCredit()}"
+            android:text="@string/buy_credit"
+            app:layout_constraintBottom_toTopOf="@+id/signout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/startChatBtn"
+            app:layout_constraintWidth_percent="0.5" />
+
+        <Button
+            android:id="@+id/signout"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="64dp"
+            android:onClick="@{() -> welcomeScreenFragment.signout()}"
+            android:text="@string/sign_out"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buyCreditBtn"
+            app:layout_constraintWidth_percent="0.5" />
+
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

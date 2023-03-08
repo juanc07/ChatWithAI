@@ -12,9 +12,12 @@
     <string name="action_settings">Settings</string>
     <string name="sign_up">Sign Up</string>
     <string name="sign_out">Sign Out</string>
+    <string name="buy_credit">Buy Credit</string>
     <string name="start_chat">Start Chat</string>
     <string name="something_went_wrong">Something went wrong, please try again</string>
     <string name="dialog_ok">Ok</string>
     <string name="welcome">Welcome back, %s</string>
+    <string name="credit_remaining">Your Credit: %d</string>
+    <string name="refill_your_credit_now">Refill Your Credits Now!</string>
     <string name="out_of_credit_info">"Sorry, but you run out of credit. you need to buy credit to use this app or activate a subscription"</string>
 </resources>

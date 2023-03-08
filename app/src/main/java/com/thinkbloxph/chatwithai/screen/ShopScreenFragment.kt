@@ -20,31 +20,29 @@ import com.thinkbloxph.chatwithai.MainActivity
 import com.thinkbloxph.chatwithai.R
 import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.api.GoogleApi
+import com.thinkbloxph.chatwithai.databinding.FragmentShopScreenBinding
 import com.thinkbloxph.chatwithai.databinding.FragmentWelcomeScreenBinding
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
 
 
 private const val INNER_TAG = "WelcomeScreenFragment"
-class WelcomeScreenFragment: Fragment() {
-    private var _binding: FragmentWelcomeScreenBinding? = null
+class ShopScreenFragment: Fragment() {
+    private var _binding: FragmentShopScreenBinding? = null
     private val binding get() = _binding!!
     private val _userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var welcomeText:TextView
     private lateinit var creditText:TextView
-    private lateinit var callback: OnBackPressedCallback
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentWelcomeScreenBinding.inflate(inflater, container, false)
-        welcomeText = binding.welcomebackText
-        creditText = binding.creditText
-
+        _binding = FragmentShopScreenBinding.inflate(inflater, container, false)
         firebaseAuth = Firebase.auth
+
+        creditText = binding.creditText
 
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
@@ -59,27 +57,10 @@ class WelcomeScreenFragment: Fragment() {
         binding?.apply {
             lifecycleOwner = viewLifecycleOwner
             userViewModel = _userViewModel
-            welcomeScreenFragment = this@WelcomeScreenFragment
+            shopScreenFragment = this@ShopScreenFragment
         }
 
-        Log.d(TAG, "[${INNER_TAG}]: check displayname: ${_userViewModel.getDisplayName()}}!")
-        welcomeText.text = getString(R.string.welcome, _userViewModel.getDisplayName())
         creditText.text = getString(R.string.credit_remaining, _userViewModel.getCredit())
-
-        callback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                // Handle the back button event here
-                // For example, you can show a dialog or navigate to a different screen
-                Log.v(TAG, "[${INNER_TAG}]: handleOnBackPressed event!!")
-                signout()
-            }
-        }
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        callback.isEnabled = false
     }
 
     override fun onStart() {
@@ -144,7 +125,5 @@ class WelcomeScreenFragment: Fragment() {
 
     fun buyCredit(){
         Log.v(TAG, "[${INNER_TAG}]: buyCredit!")
-        findNavController().navigate(R.id.action_welcomeScreenFragment_to_shopScreenFragment)
-
     }
 }

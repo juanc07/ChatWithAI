@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.thinkbloxph.pinoymassageapp.screen.ShopScreenFragment">
+
+    <data>
+        <variable
+            name="userViewModel"
+            type="com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel" />
+        <variable
+            name="shopScreenFragment"
+            type="com.thinkbloxph.chatwithai.screen.ShopScreenFragment" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <ImageView
+            android:id="@+id/chatBotImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/_256x256_chat_with_ai_no_bg"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/buyCreditText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/refill_your_credit_now"
+            android:textColor="#BD770F"
+            android:textSize="25sp"
+            app:layout_constraintBottom_toBottomOf="@+id/creditText"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/chatBotImage"
+            app:layout_constraintVertical_bias="0.1" />
+
+        <TextView
+            android:id="@+id/creditText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Your Credit: 1000"
+            android:textColor="#FFC107"
+            android:textSize="25sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/chatBotImage"
+            app:layout_constraintVertical_bias="0.1" />
+
+        <GridLayout
+            android:id="@+id/gridLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:columnCount="2"
+            android:rowCount="2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buyCreditText"
+            app:layout_constraintVertical_bias="0.5">
+
+            <Button
+            android:id="@+id/button1"
+            android:layout_width="160dp"
+            android:layout_height="80dp"
+            android:text="10 Credits"
+            android:layout_margin="10dp"/>
+
+            <Button
+                android:id="@+id/button2"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:text="50 Credits"
+                android:layout_margin="10dp"/>
+
+            <Button
+                android:id="@+id/button3"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:text="100 Credits"
+                android:layout_margin="10dp"/>
+
+            <Button
+                android:id="@+id/button4"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:text="Unli/Monthly"
+                android:layout_margin="10dp"/>
+
+
+
+        </GridLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

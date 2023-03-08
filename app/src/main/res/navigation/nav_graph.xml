@@ -32,5 +32,12 @@
         <action
             android:id="@+id/action_welcomeScreenFragment_to_loginScreenFragment"
             app:destination="@id/loginScreenFragment" />
+        <action
+            android:id="@+id/action_welcomeScreenFragment_to_shopScreenFragment"
+            app:destination="@id/shopScreenFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/shopScreenFragment"
+        android:name="com.thinkbloxph.chatwithai.screen.ShopScreenFragment"
+        android:label="@string/app_name_inner" />
 </navigation>
