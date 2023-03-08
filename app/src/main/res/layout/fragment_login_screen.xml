@@ -17,6 +17,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/login_with_facebook"
+            android:onClick="@{() -> loginScreenFragment.continueWithFB()}"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/facebook_login"
+            android:textSize="12sp"
+            app:cornerRadius="20dp"
+            app:icon="@drawable/facebook_192"
+            app:iconTintMode="multiply"
+            app:layout_constraintBottom_toTopOf="@+id/login_with_google"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
         <Button
             android:id="@+id/login_with_google"
             android:layout_width="match_parent"
@@ -25,7 +42,7 @@
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="64dp"
             android:onClick="@{() -> loginScreenFragment.continueWithGoogle()}"
-            android:text="Continue with Google"
+            android:text="@string/google_login"
             android:textSize="12sp"
             app:cornerRadius="20dp"
             app:icon="@drawable/google_192"
@@ -38,13 +55,14 @@
             android:id="@+id/imageView3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/_512x512_chat_with_ai_no_bg"
+            android:src="@drawable/_256x256_chat_with_ai_no_bg"
             app:layout_constraintBottom_toTopOf="@+id/login_with_google"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintVertical_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+             />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

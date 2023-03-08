@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -32,6 +33,7 @@ class WelcomeScreenFragment: Fragment() {
 
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var welcomeText:TextView
+    private lateinit var callback: OnBackPressedCallback
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,6 +62,21 @@ class WelcomeScreenFragment: Fragment() {
 
         Log.d(TAG, "[${INNER_TAG}]: check displayname: ${_userViewModel.getDisplayName()}}!")
         welcomeText.text = getString(R.string.welcome, _userViewModel.getDisplayName())
+
+        callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Handle the back button event here
+                // For example, you can show a dialog or navigate to a different screen
+                Log.v(TAG, "[${INNER_TAG}]: handleOnBackPressed event!!")
+                signout()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        callback.isEnabled = false
     }
 
     override fun onStart() {

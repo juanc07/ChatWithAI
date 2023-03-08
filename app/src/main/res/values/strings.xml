@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">ChatWithAI</string>
     <string name="app_name_inner">Chat With AI</string>
+    <string name="facebook_app_id">2055249754680327</string>
+    <string name="fb_login_protocol_scheme">fb2055249754680327</string>
+    <string name="facebook_client_token">63b02b0f0bdbf4c4052d21d6a5d53702</string>
+    <string name="google_login">Continue with Google</string>
+    <string name="facebook_login">Continue with Facebook</string>
     <string name="message_input_hint">Type your message</string>
     <string name="send_button_text">Send</string>
     <string name="clear_button_text">Clear</string>
@@ -11,5 +16,5 @@
     <string name="something_went_wrong">Something went wrong, please try again</string>
     <string name="dialog_ok">Ok</string>
     <string name="welcome">Welcome back, %s</string>
-    <string name="out_of_credit_info">"Sorry, but you are out of credit. you need to buy credit to use this app or activate a subscription"</string>
+    <string name="out_of_credit_info">"Sorry, but you run out of credit. you need to buy credit to use this app or activate a subscription"</string>
 </resources>

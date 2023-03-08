@@ -28,6 +28,9 @@ class FacebookApi(val _application: Application, val _activity: Activity, val _f
     var successfulCallbackResult: (FirebaseUser?) -> Unit = {}
     var failedCallbackResult = {}
 
+    lateinit var email:String
+    lateinit var phoneNumber:String
+
     fun init() {
         _context = _application?.getApplicationContext()!!
 
@@ -115,8 +118,8 @@ class FacebookApi(val _application: Application, val _activity: Activity, val _f
             try {
                 val firstName = `object`?.getString("first_name")
                 val lastName = `object`?.getString("last_name")
-                val emailAddress = `object`?.getString("email")
-                val phone = `object`?.getString("phone")
+                email = `object`?.getString("email").toString()
+                phoneNumber = `object`?.getString("phone").toString()
                 val birthday = `object`?.getString("birthday")
                 val gender = `object`?.getString("gender")
                 val id = `object`?.getString("id")
@@ -128,8 +131,8 @@ class FacebookApi(val _application: Application, val _activity: Activity, val _f
                 Log.d(TAG, "[${INNER_TAG}]: check additional fb info")
                 Log.d(TAG, "firstName: ${firstName}")
                 Log.d(TAG, "lastName: ${lastName}")
-                Log.d(TAG, "emailAddress: ${emailAddress}")
-                Log.d(TAG, "phone: ${phone}")
+                Log.d(TAG, "email: ${email}")
+                Log.d(TAG, "phoneNumber: ${phoneNumber}")
                 Log.d(TAG, "birthday: ${birthday}")
                 Log.d(TAG, "gender: ${gender}")
                 Log.d(TAG, "id: ${id}")

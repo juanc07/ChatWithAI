@@ -19,8 +19,7 @@ class UserDatabase public constructor() {
         }
     }
 
-    // 1st save only when don't exists
-    fun saveCurrentUserToDatabase(googleId:String) {
+    fun saveCurrentUserToDatabase(user: User, completion: (isSuccess:Boolean) -> Unit) {
         // Get the current user from Firebase Authentication
         val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -28,9 +27,6 @@ class UserDatabase public constructor() {
         if (currentUser != null) {
             // Get a reference to the users node in the Realtime Database
             val databaseRef = FirebaseDatabase.getInstance().getReference("users")
-
-            // Create a new user object with the required fields
-            val user = User(currentUser.uid, currentUser.displayName, currentUser.email, currentUser.phoneNumber, googleId, null, 5, false, System.currentTimeMillis())
 
             // Create a map to only include the required fields
             val userMap = mapOf(
@@ -47,9 +43,17 @@ class UserDatabase public constructor() {
 
             // Save the user object to the database with only the required fields
             databaseRef.child(currentUser.uid).setValue(userMap)
-            Log.v(TAG, "[${INNER_TAG}]: saveCurrentUserToDatabase user.uid: ${user.uid} user.displayName: ${user.displayName}")
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.v(TAG, "[${INNER_TAG}]: saveCurrentUserToDatabase user.uid: ${user.uid} user.displayName: ${user.displayName}")
+                        completion(true) // call the completion block with true if the save is successful
+                    } else {
+                        completion(false) // call the completion block with false if the save fails
+                    }
+                }
         }
     }
+
 
 
     fun updateCurrentUserToDatabase(googleId:String,facebookId:String, credit:Int,isSubscribed:Boolean) {
