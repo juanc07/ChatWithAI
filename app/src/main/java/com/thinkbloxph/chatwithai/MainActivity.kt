@@ -15,6 +15,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
+import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 
 const val TAG = "chatwitai"

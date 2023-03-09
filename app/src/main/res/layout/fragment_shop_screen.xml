@@ -23,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:src="@drawable/_256x256_chat_with_ai_no_bg"
+            android:src="@drawable/_256x256_chat_with_ai_no_bg_violet"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
@@ -36,7 +36,7 @@
             android:layout_marginTop="8dp"
             android:text="@string/refill_your_credit_now"
             android:textColor="#BD770F"
-            android:textSize="25sp"
+            android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="@+id/creditText"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -48,9 +48,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Your Credit: 1000"
+            android:text="Your Credit: 0"
             android:textColor="#FFC107"
-            android:textSize="25sp"
+            android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -71,7 +71,7 @@
             app:layout_constraintVertical_bias="0.5">
 
             <Button
-            android:id="@+id/button1"
+            android:id="@+id/buyBtn1"
                 android:onClick="@{() -> shopScreenFragment.buyCreditTen()}"
             android:layout_width="160dp"
             android:layout_height="80dp"
@@ -79,27 +79,29 @@
             android:layout_margin="10dp"/>
 
             <Button
-                android:id="@+id/button2"
+                android:id="@+id/buyBtn2"
+                android:onClick="@{() -> shopScreenFragment.buyCreditFifty()}"
                 android:layout_width="160dp"
                 android:layout_height="80dp"
                 android:text="50 Credits"
                 android:layout_margin="10dp"/>
 
             <Button
-                android:id="@+id/button3"
+                android:id="@+id/buyBtn3"
+                android:onClick="@{() -> shopScreenFragment.buyCreditOneHundred()}"
                 android:layout_width="160dp"
                 android:layout_height="80dp"
                 android:text="100 Credits"
                 android:layout_margin="10dp"/>
 
             <Button
-                android:id="@+id/button4"
+                android:id="@+id/buyBtn4"
+                android:onClick="@{() -> shopScreenFragment.buyMonthlySubscription()}"
                 android:layout_width="160dp"
                 android:layout_height="80dp"
-                android:text="Unli/Monthly"
+                android:text="@{userViewModel.isSubscribed() ? `Unsubscribe` : `Subscribed`}"
+                android:backgroundTint="@{userViewModel.isSubscribed() ? @color/Subscribed : @color/UnSubscribed}"
                 android:layout_margin="10dp"/>
-
-
 
         </GridLayout>
 

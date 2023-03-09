@@ -20,11 +20,13 @@ import com.thinkbloxph.chatwithai.api.FacebookApi
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentLoginScreenBinding
 import com.thinkbloxph.chatwithai.helper.FirebaseHelper
+import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.Provider
 import com.thinkbloxph.chatwithai.network.UserDatabase
 import com.thinkbloxph.chatwithai.network.model.User
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
+import java.util.*
 
 private const val INNER_TAG = "LoginScreenFragment"
 class LoginScreenFragment: Fragment() {
@@ -118,8 +120,8 @@ class LoginScreenFragment: Fragment() {
                                 val user = User(currentUser.uid, _userViewModel.getDisplayName(),
                                     _userViewModel.getEmail(), _userViewModel.getPhoneNumber(),
                                     _userViewModel.getGoogleUserId(), _userViewModel.getFacebookUserId(),
-                                    _userViewModel.getCredit(), _userViewModel.getIsSubscribed(),
-                                    _userViewModel.getCreatedDate())
+                                    _userViewModel.getCredit(), _userViewModel.getIsSubscribed()
+                                    )
                                 userDb.saveCurrentUserToDatabase(user) { isSuccess ->
                                     if (isSuccess) {
                                         UIHelper.getInstance().hideLoading()
@@ -170,8 +172,8 @@ class LoginScreenFragment: Fragment() {
                             val user = User(currentUser.uid, _userViewModel.getDisplayName(),
                                 _userViewModel.getEmail(), _userViewModel.getPhoneNumber(),
                                 _userViewModel.getGoogleUserId(), _userViewModel.getFacebookUserId(),
-                                _userViewModel.getCredit(), _userViewModel.getIsSubscribed(),
-                                _userViewModel.getCreatedDate())
+                                _userViewModel.getCredit(), _userViewModel.getIsSubscribed()
+                                )
                             userDb.saveCurrentUserToDatabase(user) { isSuccess ->
                                 if (isSuccess) {
                                     UIHelper.getInstance().hideLoading()
@@ -208,11 +210,16 @@ class LoginScreenFragment: Fragment() {
                 user.phoneNumber?.let { phoneNumber-> _userViewModel.setPhoneNumber(phoneNumber) }
                 user.email?.let { email-> _userViewModel.setEmail(email) }
                 user.credit?.let { credit->_userViewModel.setCredit(credit)}
+                Log.d(TAG, "[${INNER_TAG}]: 1st check isSubscribed: ${user.isSubscribed}!")
                 user.isSubscribed?.let { isSubscribed-> _userViewModel.setIsSubscribed(isSubscribed) }
-                user.createdDate?.let { createdDate-> _userViewModel.setCreatedDate(createdDate) }
+                val timestamp = user.timestamp
+                Log.d(TAG, "User ${user.uid} was created at ${Date(timestamp)}")
+                timestamp?.let { timestamp-> _userViewModel.setCreatedDate(timestamp) }
 
-                Log.d(TAG, "[${INNER_TAG}]: check displayName: ${_userViewModel.getDisplayName()}}!")
-                Log.d(TAG, "[${INNER_TAG}]: check credit: ${_userViewModel.getCredit()}}!")
+                Log.d(TAG, "[${INNER_TAG}]: check displayName: ${_userViewModel.getDisplayName()}!")
+                Log.d(TAG, "[${INNER_TAG}]: check credit: ${_userViewModel.getCredit()}!")
+                Log.d(TAG, "[${INNER_TAG}]: 2nd check isSubscribed: ${_userViewModel.getIsSubscribed()}!")
+                Log.d(TAG, "[${INNER_TAG}]: check getCreatedDate: ${_userViewModel.getCreatedDate()}!")
                 Log.d(TAG, "[${INNER_TAG}]: loadUserData success!")
 
                 UIHelper.getInstance().hideLoading()

@@ -11,7 +11,8 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <!-- ActionBar color -->
+        <item name="android:textColorPrimary">@color/white</item>
     </style>
 
     <style name="Theme.ChatWithAI.NoActionBar">

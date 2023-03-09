@@ -1,5 +1,6 @@
 package com.thinkbloxph.chatwithai
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -41,6 +42,7 @@ class MessageListAdapter(private val messageListRecyclerView: RecyclerView) : Re
 
     fun clearMessages() {
         messageList.clear()
+        notifyDataSetChanged()
     }
 
     companion object {

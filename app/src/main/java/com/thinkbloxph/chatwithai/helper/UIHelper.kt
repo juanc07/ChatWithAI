@@ -105,11 +105,6 @@ class UIHelper(val _activity: Activity, val _fragment: Fragment) {
         textView.movementMethod = LinkMovementMethod.getInstance()
     }
 
-    fun showHideBackButton(isShow: Boolean) {
-        if (isShow) (_activity as AppCompatActivity).supportActionBar?.show()
-        else (_activity as AppCompatActivity).supportActionBar?.hide()
-    }
-
     fun showHideActionBarWithoutBackButton(isShow: Boolean,binding:ActivityMainBinding) {
         if (isShow) {
             (_activity as AppCompatActivity).supportActionBar?.show()
@@ -120,6 +115,15 @@ class UIHelper(val _activity: Activity, val _fragment: Fragment) {
             (_activity as AppCompatActivity).supportActionBar?.hide()
             _activity.supportActionBar?.setDisplayShowHomeEnabled(false)
             binding.toolbar.navigationIcon = null
+        }
+    }
+
+    fun showHideActionBar(isShow: Boolean,binding:ActivityMainBinding) {
+        if (isShow) {
+            (_activity as AppCompatActivity).supportActionBar?.show()
+        }
+        else {
+            (_activity as AppCompatActivity).supportActionBar?.hide()
         }
     }
 }

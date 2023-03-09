@@ -4,17 +4,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Button
-import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.facebook.login.LoginManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -25,7 +20,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.thinkbloxph.chatwithai.*
 import com.thinkbloxph.chatwithai.api.GoogleApi
-import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
 import com.thinkbloxph.chatwithai.databinding.FragmentChatScreenBinding
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.UserDatabase
@@ -47,6 +41,11 @@ class ChatScreenFragment: Fragment() {
     private lateinit var sendButton: Button
     private lateinit var messageInputField: TextInputEditText
     private val userDb = UserDatabase()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -71,9 +70,10 @@ class ChatScreenFragment: Fragment() {
         sendButton.setOnClickListener {
 
             var remainingCredit = _userViewModel.getCredit()
+            var isSubscribed = _userViewModel.getIsSubscribed()
             Log.d(TAG, "[${INNER_TAG}]: check credit: ${remainingCredit}}!")
-            if (remainingCredit != null) {
-                if(remainingCredit > 0){
+            if (remainingCredit != null && isSubscribed != null) {
+                if(remainingCredit > 0 || isSubscribed){
                     // Send button click logic here
                     val messageText = messageInputField.text.toString()
                     if (!messageText.isNullOrEmpty() && !messageText.isBlank()) {
@@ -82,16 +82,6 @@ class ChatScreenFragment: Fragment() {
                         messageListAdapter.addMessage(message)
                         messageInputField.text?.clear()
                         progressDialog.show()
-
-
-                        // Auto-reply from AI after user sends a message
-                        /*val aiResponseText =
-                            "rd: ${generateRandomString()}"
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            val aiResponse = ChatMessage(aiResponseText, "AI")
-                            messageListAdapter.addMessage(aiResponse)
-                        }, 2000) // delay AI response by 2 seconds*/
-
 
                         val openAI = OpenAIAPI(lifecycleScope,requireContext())
                         lifecycleScope.launch(Dispatchers.IO) {
@@ -110,17 +100,20 @@ class ChatScreenFragment: Fragment() {
                                             messageListAdapter.addMessage(aiResponse)
                                             sendButton.isEnabled = true
 
-                                            _userViewModel.getCredit()?.let { it1 ->
-                                                userDb.updateCredit(it1,1, callback = { newCredit,isSuccess->
-                                                    if(isSuccess){
-                                                        _userViewModel.setCredit(newCredit)
-                                                        Log.d(TAG, "[${INNER_TAG}]: deduct credit success!")
-                                                    }else{
-                                                        Log.d(TAG, "[${INNER_TAG}]: deduct credit failed!")
-                                                    }
-                                                })
+                                            if(!isSubscribed){
+                                                _userViewModel.getCredit()?.let { it1 ->
+                                                    userDb.updateCredit(it1,-1, callback = { newCredit, isSuccess->
+                                                        if(isSuccess){
+                                                            if (newCredit != null) {
+                                                                _userViewModel.setCredit(newCredit)
+                                                            }
+                                                            Log.d(TAG, "[${INNER_TAG}]: deduct credit success!")
+                                                        }else{
+                                                            Log.d(TAG, "[${INNER_TAG}]: deduct credit failed!")
+                                                        }
+                                                    })
+                                                }
                                             }
-
                                         }, 500) // delay AI response by 2 seconds
                                     } else {
                                         // The messages are empty
@@ -179,6 +172,29 @@ class ChatScreenFragment: Fragment() {
         return binding.root
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_main, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_button -> {
+                // Handle button click here
+                Log.v(TAG, "[${INNER_TAG}]: click clear action bar button")
+                clearInput()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Call this method to hide the button
+        _binding = null
+    }
+
     private fun showDialog(title:String, message:String){
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(title)
@@ -231,17 +247,15 @@ class ChatScreenFragment: Fragment() {
         super.onStart()
         // hide the action back button
         //UIHelper.getInstance().showHideBackButton(true)
+
+        // show action bar without back button
         UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
     }
 
-    fun goToChat() {
-        //findNavController().navigate(R.id.action_loginScreenFragment_to_chatActivity)
-    }
-
     fun clearInput(){
-        messageInputField.text?.clear()
+        messageListAdapter.clearMessages()
     }
 
     fun signout(){
@@ -267,6 +281,5 @@ class ChatScreenFragment: Fragment() {
             }
         }
         firebaseAuth.signOut()
-        //findNavController().navigate(R.id.action_dashboardScreenFragment_to_welcomeScreenFragment)
     }
 }

@@ -32,8 +32,8 @@ class UserViewModel : ViewModel() {
     private val _isSubscribed = MutableLiveData<Boolean>()
     val isSubscribed: LiveData<Boolean> = _isSubscribed
 
-    private val _createdDate = MutableLiveData<Any>()
-    val createdDate: LiveData<Any> = _createdDate
+    private val _createdDate = MutableLiveData<Long>()
+    val createdDate: LiveData<Long> = _createdDate
 
     fun setFirebaseUserId(firebaseUserId: String) {
         _firebaseUserId.value = firebaseUserId
@@ -107,11 +107,11 @@ class UserViewModel : ViewModel() {
         return _isSubscribed.value
     }
 
-    fun setCreatedDate(createdDate: Any) {
+    fun setCreatedDate(createdDate: Long) {
         _createdDate.value = createdDate
     }
 
-    fun getCreatedDate(): Any? {
+    fun getCreatedDate(): Long? {
         return _createdDate.value
     }
 

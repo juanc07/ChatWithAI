@@ -2,10 +2,9 @@ package com.thinkbloxph.chatwithai.network
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.network.model.User
 
@@ -38,7 +37,7 @@ class UserDatabase public constructor() {
                 "facebookId" to user.facebookId,
                 "credit" to user.credit,
                 "isSubscribed" to user.isSubscribed,
-                "timestamp" to user.createdDate
+                "timestamp" to ServerValue.TIMESTAMP
             )
 
             // Save the user object to the database with only the required fields
@@ -54,48 +53,59 @@ class UserDatabase public constructor() {
         }
     }
 
-
-
-    fun updateCurrentUserToDatabase(googleId:String,facebookId:String, credit:Int,isSubscribed:Boolean) {
+    fun updateCredit(currentCredit: Int, updateAmount: Int, callback: (resultCredit: Int?, isSuccess: Boolean) -> Unit) {
         // Get the current user from Firebase Authentication
         val currentUser = FirebaseAuth.getInstance().currentUser
 
-        if (currentUser != null) {
-            // Get a reference to the users node in the Realtime Database
-            val databaseRef = FirebaseDatabase.getInstance().getReference("users")
-
-            // Create a new user object
-            val updatedUser = User(currentUser?.uid, currentUser?.displayName, currentUser?.email,currentUser?.phoneNumber,googleId,facebookId,credit,isSubscribed,System.currentTimeMillis())
-
-            // Update the user object at their existing location in the database
-            databaseRef.child(currentUser.uid).updateChildren(updatedUser.toMap())
+        if(currentUser == null) {
+            callback(null, false)
+            return
         }
-    }
 
-    fun updateCredit(currentCredit:Int, deduction:Int,callback: (resultCredit: Int,isSuccess:Boolean) -> Unit){
-        // Get the current user from Firebase Authentication
-        val currentUser = FirebaseAuth.getInstance().currentUser
+        // Get a reference to the user's node in the Realtime Database
+        val databaseRef = FirebaseDatabase.getInstance().getReference("users/${currentUser.uid}")
 
-        // Get a reference to the users node in the Realtime Database
-        val databaseRef = FirebaseDatabase.getInstance().getReference("users")
+        databaseRef.runTransaction(object : Transaction.Handler {
+            override fun doTransaction(currentData: MutableData): Transaction.Result {
+                // Get the current credit balance
+                //val credit = currentData.child("credit").getValue(Int::class.java) ?: 0
 
-        // Deduct credits from the user's balance
-        val newCredit = maxOf(currentCredit - deduction, 0)
-        val updates = mapOf("credit" to newCredit)
+                // Calculate the new credit balance
+                val newCredit = currentCredit + updateAmount
 
-        if(currentUser!=null){
-            databaseRef.child(currentUser.uid).updateChildren(updates)
-                .addOnSuccessListener {
-                    // Update successful
-                    Log.v(TAG, "[${INNER_TAG}]: updateCredit success currentUser.uid: ${currentUser.uid}")
-                    callback(newCredit,true)
+                // If the new credit balance would be negative, cancel the transaction
+                if (newCredit < 0) {
+                    return Transaction.abort()
                 }
-                .addOnFailureListener { e ->
-                    // Update failed
-                    Log.v(TAG, "[${INNER_TAG}]: updateCredit failed currentUser.uid: ${currentUser.uid}")
-                    callback(newCredit,false)
+
+                // Update the credit balance in the Realtime Database
+                currentData.child("credit").value = newCredit
+
+                // Set the transaction result
+                return Transaction.success(currentData)
+            }
+
+            override fun onComplete(
+                error: DatabaseError?,
+                committed: Boolean,
+                currentData: DataSnapshot?
+            ) {
+                if (error != null) {
+                    // Transaction failed
+                    Log.v(TAG, "[${INNER_TAG}]: updateCredit transaction failed currentUser.uid: ${currentUser.uid}")
+                    callback(null, false)
+                } else if (committed) {
+                    // Transaction successful
+                    val newCredit = currentData?.child("credit")?.getValue(Int::class.java) ?: 0
+                    Log.v(TAG, "[${INNER_TAG}]: updateCredit transaction success currentUser.uid: ${currentUser.uid}, new credit: $newCredit")
+                    callback(newCredit, true)
+                } else {
+                    // Transaction canceled
+                    Log.v(TAG, "[${INNER_TAG}]: updateCredit transaction canceled currentUser.uid: ${currentUser.uid}")
+                    callback(null, false)
                 }
-        }
+            }
+        })
     }
 
     fun updateSubscription(newStatus:Boolean){
@@ -192,6 +202,7 @@ class UserDatabase public constructor() {
             }
         })
     }
+
 
     fun deleteCurrentUser() {
         // Get the current user from Firebase Authentication

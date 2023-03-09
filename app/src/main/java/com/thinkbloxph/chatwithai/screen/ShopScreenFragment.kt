@@ -1,14 +1,15 @@
 package com.thinkbloxph.chatwithai.screen
 
+
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.facebook.login.LoginManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -20,14 +21,15 @@ import com.thinkbloxph.chatwithai.MainActivity
 import com.thinkbloxph.chatwithai.R
 import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.api.GoogleApi
+import com.thinkbloxph.chatwithai.constant.SkuConstants
 import com.thinkbloxph.chatwithai.databinding.FragmentShopScreenBinding
-import com.thinkbloxph.chatwithai.databinding.FragmentWelcomeScreenBinding
 import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
+import com.thinkbloxph.chatwithai.network.UserDatabase
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
 
 
-private const val INNER_TAG = "WelcomeScreenFragment"
+private const val INNER_TAG = "ShopScreenFragment"
 class ShopScreenFragment: Fragment() {
     private var _binding: FragmentShopScreenBinding? = null
     private val binding get() = _binding!!
@@ -36,6 +38,7 @@ class ShopScreenFragment: Fragment() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var creditText:TextView
     private lateinit var inAppPurchaseManager: InAppPurchaseManager
+    private val userDb = UserDatabase()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -49,7 +52,7 @@ class ShopScreenFragment: Fragment() {
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
 
-        inAppPurchaseManager = InAppPurchaseManager(requireActivity())
+        inAppPurchaseManager = InAppPurchaseManager.getInstance(requireActivity())
         inAppPurchaseManager.setOnPurchasesUpdatedListener { purchases ->
             // Handle the list of purchases
             for (purchase in purchases) {
@@ -75,7 +78,26 @@ class ShopScreenFragment: Fragment() {
             shopScreenFragment = this@ShopScreenFragment
         }
 
-        creditText.text = getString(R.string.credit_remaining, _userViewModel.getCredit())
+        _userViewModel.credit.observe(viewLifecycleOwner, Observer { credit ->
+            // Do something with the new credit value
+            creditText.text = getString(R.string.credit_remaining, _userViewModel.getCredit())
+            Log.d(TAG, "Credit changed: $credit")
+        })
+
+        _userViewModel.isSubscribed.observe(viewLifecycleOwner, Observer { isSubscribed ->
+            // Do something with the new credit value
+            if(isSubscribed){
+                showHideUnlimited(isSubscribed)
+                Log.d(TAG, "isSubscribed changed: $isSubscribed")
+            }else{
+                creditText.text = getString(R.string.credit_remaining, _userViewModel.getCredit())
+            }
+        })
+
+        var isSubscribed = _userViewModel.getIsSubscribed()
+        if (isSubscribed != null) {
+            showHideUnlimited(isSubscribed)
+        }
     }
 
     override fun onStart() {
@@ -105,6 +127,15 @@ class ShopScreenFragment: Fragment() {
             sideNavView?.visibility = View.VISIBLE
         } else {
             sideNavView?.visibility = View.GONE
+        }
+    }
+
+    fun showHideUnlimited(isSubscribed:Boolean){
+        if(isSubscribed){
+            creditText.text = getString(R.string.unlimited_credit)
+            Log.d(TAG, "isSubscribed changed: $isSubscribed")
+        }else{
+            creditText.text = getString(R.string.credit_remaining, _userViewModel.getCredit())
         }
     }
 
@@ -138,8 +169,117 @@ class ShopScreenFragment: Fragment() {
         findNavController().navigate(R.id.action_welcomeScreenFragment_to_loginScreenFragment)
     }
 
+    private fun updateCredit(creditToAdd:Int){
+        _userViewModel.getCredit()?.let { it1 ->
+            userDb.updateCredit(it1,creditToAdd, callback = { newCredit, isSuccess->
+                if(isSuccess){
+                    if (newCredit != null) {
+                        _userViewModel.setCredit(newCredit)
+                    }
+                    Log.d(TAG, "[${INNER_TAG}]: add ${creditToAdd} credit success!")
+                    Log.d(TAG, "[${INNER_TAG}]: newCredit: ${newCredit}")
+                }else{
+                    Log.d(TAG, "[${INNER_TAG}]: add credit failed!")
+                }
+            })
+        }
+    }
+
     fun buyCreditTen(){
-        Log.v(TAG, "[${INNER_TAG}]: buyCredit!")
-        inAppPurchaseManager.purchase("cwai_credit_10")
+        Log.v(TAG, "[${INNER_TAG}]: buyCredit 10!")
+        inAppPurchaseManager.purchaseInApp(SkuConstants.CWAI_CREDIT_10){ sku,isSuccess ->
+            if (!isSuccess) {
+                UIHelper.getInstance().showDialogMessage(
+                    getString(R.string.purchase_failed), getString(R.string.dialog_ok)
+                )
+            }else{
+                if(sku.equals(SkuConstants.CWAI_CREDIT_10)){
+                    Log.v(TAG, "[${INNER_TAG}]: purchase 10 credit success!")
+                    updateCredit(10)
+                }
+            }
+        }
+    }
+
+    fun buyCreditTwenty(){
+        Log.v(TAG, "[${INNER_TAG}]: buyCredit 20!")
+        inAppPurchaseManager.purchaseInApp(SkuConstants.CWAI_CREDIT_20){ sku,isSuccess ->
+            if (!isSuccess) {
+                UIHelper.getInstance().showDialogMessage(
+                    getString(R.string.purchase_failed), getString(R.string.dialog_ok)
+                )
+            }else{
+                if(sku.equals(SkuConstants.CWAI_CREDIT_20)){
+                    Log.v(TAG, "[${INNER_TAG}]: purchase 20 credit success!")
+                    updateCredit(20)
+                }
+            }
+        }
+    }
+
+    fun buyCreditFifty(){
+        Log.v(TAG, "[${INNER_TAG}]: buyCredit 50!")
+        inAppPurchaseManager.purchaseInApp(SkuConstants.CWAI_CREDIT_50){ sku,isSuccess ->
+            if (!isSuccess) {
+                UIHelper.getInstance().showDialogMessage(
+                    getString(R.string.purchase_failed), getString(R.string.dialog_ok)
+                )
+            }else{
+                if(sku.equals(SkuConstants.CWAI_CREDIT_50)){
+                    Log.v(TAG, "[${INNER_TAG}]: purchase 50 credit success!")
+                    updateCredit(50)
+                }
+            }
+        }
+    }
+
+    fun buyCreditOneHundred(){
+        Log.v(TAG, "[${INNER_TAG}]: buyCredit 100!")
+        inAppPurchaseManager.purchaseInApp(SkuConstants.CWAI_CREDIT_100){ sku,isSuccess ->
+            if (!isSuccess) {
+                UIHelper.getInstance().showDialogMessage(
+                    getString(R.string.purchase_failed), getString(R.string.dialog_ok)
+                )
+            }else{
+                if(sku.equals(SkuConstants.CWAI_CREDIT_100)){
+                    Log.v(TAG, "[${INNER_TAG}]: purchase 100 credit success!")
+                    updateCredit(100)
+                }
+            }
+        }
+    }
+
+    fun buyMonthlySubscription(){
+        Log.v(TAG, "[${INNER_TAG}]: buy Monthly Subscription ")
+
+        inAppPurchaseManager.purchaseSubscription(SkuConstants.SubscriptionSku){ sku,isSuccess ->
+            if (!isSuccess) {
+                UIHelper.getInstance().showDialogMessage(
+                    getString(R.string.something_went_wrong), getString(R.string.dialog_ok)
+                )
+            }else{
+                if(sku == SkuConstants.SubscriptionSku){
+                    Log.v(TAG, "[${INNER_TAG}]: purchase subscription unli credit success!")
+                    userDb.updateSubscription(true)
+                    _userViewModel.setIsSubscribed(true)
+                }
+            }
+       }
+
+        /*if(!inAppPurchaseManager.isSubscribed(SkuConstants.SubscriptionSku)){
+
+        }else{
+            Log.v(TAG, "[${INNER_TAG}]: already subscribed")
+           UIHelper.getInstance().showDialogMessage(
+                getString(R.string.already_subscribed), getString(R.string.dialog_ok)
+            )
+            inAppPurchaseManager.unSubscribe(SkuConstants.SubscriptionSku) { isSuccess ->
+                if (isSuccess) {
+                    Log.v(TAG, "[${INNER_TAG}]: unssubscribe unli credit success!")
+                }else{
+                    Log.v(TAG, "[${INNER_TAG}]: unssubscribe unli credit failed!")
+                }
+            }
+        }*/
     }
 }
