@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -37,6 +38,7 @@ class ShopScreenFragment: Fragment() {
 
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var creditText:TextView
+    private lateinit var subscriptionBtn:Button
     private lateinit var inAppPurchaseManager: InAppPurchaseManager
     private val userDb = UserDatabase()
 
@@ -48,6 +50,7 @@ class ShopScreenFragment: Fragment() {
         firebaseAuth = Firebase.auth
 
         creditText = binding.creditText
+        subscriptionBtn = binding.buySubscriptionBtn
 
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
@@ -133,9 +136,11 @@ class ShopScreenFragment: Fragment() {
     fun showHideUnlimited(isSubscribed:Boolean){
         if(isSubscribed){
             creditText.text = getString(R.string.unlimited_credit)
+            subscriptionBtn.visibility = View.GONE
             Log.d(TAG, "isSubscribed changed: $isSubscribed")
         }else{
             creditText.text = getString(R.string.credit_remaining, _userViewModel.getCredit())
+            subscriptionBtn.visibility = View.VISIBLE
         }
     }
 
@@ -250,36 +255,36 @@ class ShopScreenFragment: Fragment() {
     }
 
     fun buyMonthlySubscription(){
-        Log.v(TAG, "[${INNER_TAG}]: buy Monthly Subscription ")
-
-        inAppPurchaseManager.purchaseSubscription(SkuConstants.SubscriptionSku){ sku,isSuccess ->
-            if (!isSuccess) {
-                UIHelper.getInstance().showDialogMessage(
-                    getString(R.string.something_went_wrong), getString(R.string.dialog_ok)
-                )
-            }else{
-                if(sku == SkuConstants.SubscriptionSku){
-                    Log.v(TAG, "[${INNER_TAG}]: purchase subscription unli credit success!")
-                    userDb.updateSubscription(true)
-                    _userViewModel.setIsSubscribed(true)
+        //if(!inAppPurchaseManager.isSubscribed(SkuConstants.SubscriptionSku)){
+        if(!_userViewModel.getIsSubscribed()!!){
+            Log.v(TAG, "[${INNER_TAG}]: buy Monthly Subscription ")
+            inAppPurchaseManager.purchaseSubscription(SkuConstants.SubscriptionSku){ sku,isSuccess ->
+                if (!isSuccess) {
+                    UIHelper.getInstance().showDialogMessage(
+                        getString(R.string.something_went_wrong), getString(R.string.dialog_ok)
+                    )
+                }else{
+                    if(sku == SkuConstants.SubscriptionSku){
+                        Log.v(TAG, "[${INNER_TAG}]: purchase subscription unli credit success!")
+                        userDb.updateSubscription(true)
+                        _userViewModel.setIsSubscribed(true)
+                    }
                 }
             }
-       }
-
-        /*if(!inAppPurchaseManager.isSubscribed(SkuConstants.SubscriptionSku)){
-
         }else{
             Log.v(TAG, "[${INNER_TAG}]: already subscribed")
-           UIHelper.getInstance().showDialogMessage(
-                getString(R.string.already_subscribed), getString(R.string.dialog_ok)
-            )
-            inAppPurchaseManager.unSubscribe(SkuConstants.SubscriptionSku) { isSuccess ->
+            // unsubscribe action
+            inAppPurchaseManager.unSubscribe(SkuConstants.SubscriptionSku){ sku,isSuccess ->
                 if (isSuccess) {
-                    Log.v(TAG, "[${INNER_TAG}]: unssubscribe unli credit success!")
+                    if(sku == SkuConstants.SubscriptionSku){
+                        Log.v(TAG, "[${INNER_TAG}]: unSubscribe unli credit success!")
+                        userDb.updateSubscription(false)
+                        _userViewModel.setIsSubscribed(false)
+                    }
                 }else{
-                    Log.v(TAG, "[${INNER_TAG}]: unssubscribe unli credit failed!")
+                    Log.v(TAG, "[${INNER_TAG}]: unSubscribe unli credit failed!")
                 }
             }
-        }*/
+        }
     }
 }

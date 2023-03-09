@@ -87,7 +87,7 @@ class LoginScreenFragment: Fragment() {
                     Log.d(TAG, "[${INNER_TAG}]: current user exist and user is in database")
                 }else{
                     Log.d(TAG, "[${INNER_TAG}]: current user exist but user is not in database")
-
+                    UIHelper.getInstance().hideLoading()
                 }
             })
         }

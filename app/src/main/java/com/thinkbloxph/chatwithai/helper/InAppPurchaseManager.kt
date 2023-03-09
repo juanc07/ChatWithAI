@@ -17,6 +17,7 @@ class InAppPurchaseManager private constructor(private val activity: Activity) :
     private var skuInAppDetailsFetched = false
     private var skuSubscriptionDetailsFetched = false
     var successfulPurchaseCallback: (String, Boolean) -> Unit = { _, _->}
+    var unSubscribeSuccessfulCallback: (String, Boolean) -> Unit = { _, _->}
     companion object {
         private const val TAG = "InAppPurchaseManager"
         @Volatile
@@ -180,14 +181,15 @@ class InAppPurchaseManager private constructor(private val activity: Activity) :
         }
     }
 
-    fun unSubscribe(sku: String,callback: (isSuccess:Boolean)->Unit) {
-        val skuList = listOf(sku) // replace with your own SKU
+    fun unSubscribe(sku: String,unSubscribeCallback: (String, Boolean) -> Unit) {
+        unSubscribeSuccessfulCallback = unSubscribeCallback
+        /*val skuList = listOf(sku) // replace with your own SKU
         val subsParams = SkuDetailsParams.newBuilder()
             .setType(BillingClient.SkuType.SUBS)
             .setSkusList(skuList)
             .build()
 
-        billingClient.querySkuDetailsAsync(subsParams) { billingResult, skuDetailsList ->
+       billingClient.querySkuDetailsAsync(subsParams) { billingResult, skuDetailsList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 val skuDetails = skuDetailsList?.firstOrNull()
                 if (skuDetails != null) {
@@ -227,7 +229,68 @@ class InAppPurchaseManager private constructor(private val activity: Activity) :
                     }
                 }
             }
-        }
+           }*/
+
+            val skuDetailsParams = SkuDetailsParams.newBuilder()
+                .setSkusList(listOf(SkuConstants.SubscriptionSku, SkuConstants.CWAI_UNLI_CREDIT_MONTHLY))
+                .setType(BillingClient.SkuType.SUBS)
+                .build()
+            billingClient.querySkuDetailsAsync(skuDetailsParams) { billingResult, skuDetailsList ->
+                if (skuDetailsList != null) {
+                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && skuDetailsList.isNotEmpty()) {
+                        if (skuDetailsList != null) {
+                            skuSubscriptionDetailsMap = skuDetailsList.associateBy { it.sku }
+                        }
+                        val subscriptionSkuDetails = skuSubscriptionDetailsMap[SkuConstants.SubscriptionSku]
+                        val basePlanSkuDetails = skuSubscriptionDetailsMap[SkuConstants.CWAI_UNLI_CREDIT_MONTHLY]
+                        // Do something with the subscription and base plan SKU details
+                        Log.d(TAG, "subscriptionSkuDetails: ${subscriptionSkuDetails}")
+                        Log.d(TAG, "basePlanSkuDetails: ${basePlanSkuDetails}")
+
+
+                        if (subscriptionSkuDetails != null) {
+                            Log.v(TAG, " unSubscribe skuDetails: ${subscriptionSkuDetails}")
+                            billingClient.launchPriceChangeConfirmationFlow(activity, PriceChangeFlowParams.newBuilder()
+                                .setSkuDetails(subscriptionSkuDetails)
+                                .build()) { billingResult ->
+
+                                when (billingResult.responseCode) {
+                                    BillingClient.BillingResponseCode.OK -> {
+                                        Log.d(TAG, "unSubscribe Subscription canceled successfully")
+                                        // Update UI or perform any necessary actions
+                                    }
+                                    BillingClient.BillingResponseCode.USER_CANCELED -> {
+                                        Log.d(TAG, "unSubscribe User canceled the subscription cancelation")
+                                    }
+                                    BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> {
+                                        Log.d(TAG, "unSubscribe Billing service unavailable. Try again later")
+                                    }
+                                    BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> {
+                                        Log.d(TAG, "unSubscribe The subscription is not available for purchase")
+                                    }
+                                    BillingClient.BillingResponseCode.ERROR -> {
+                                        Log.d(TAG, "unSubscribe An error occurred while canceling the subscription: ${billingResult.debugMessage}")
+                                    }
+                                }
+
+                                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                                    // User has successfully unsubscribed
+                                    Log.v(TAG, " unSubscribe skuDetails: ${subscriptionSkuDetails} success!!")
+                                    unSubscribeSuccessfulCallback(SkuConstants.SubscriptionSku,true)
+                                } else {
+                                    // Unsubscribe failed
+                                    Log.e(TAG, "unSubscribe Failed to acknowledge purchase: ${billingResult.debugMessage}")
+                                    unSubscribeSuccessfulCallback(SkuConstants.SubscriptionSku,false)
+                                }
+                            }
+                        }
+                    } else {
+                        // Handle the error
+                        Log.e(TAG, "Sku details querySkuSubscriptionDetails failed: ${billingResult.debugMessage}")
+                        unSubscribeSuccessfulCallback(SkuConstants.SubscriptionSku,false)
+                    }
+                }
+            }
     }
 
     fun isSubscribed(sku: String): Boolean {
