@@ -19,14 +19,15 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/login_with_facebook"
-            android:onClick="@{() -> loginScreenFragment.continueWithFB()}"
             android:layout_width="match_parent"
             android:layout_height="65dp"
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="16dp"
+            android:onClick="@{() -> loginScreenFragment.continueWithFB()}"
             android:text="@string/facebook_login"
             android:textSize="12sp"
+            android:visibility="gone"
             app:cornerRadius="20dp"
             app:icon="@drawable/facebook_192"
             app:iconTintMode="multiply"
@@ -86,8 +87,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="310dp"
-            android:layout_marginEnd="43dp"
-            android:layout_marginBottom="34dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
