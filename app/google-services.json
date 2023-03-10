@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "824771532669",
+    "firebase_url": "https://chatwithai-f848d-default-rtdb.firebaseio.com",
     "project_id": "chatwithai-f848d",
     "storage_bucket": "chatwithai-f848d.appspot.com"
   },
@@ -14,6 +15,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "824771532669-06dpnsd3qle8n92qsh1hd42fv16m7p1a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.thinkbloxph.chatwithai",
+            "certificate_hash": "9165b3d34fd2ab896be149990a87898ad73638bd"
+          }
+        },
+        {
+          "client_id": "824771532669-2h1eu9vpopdclete4gh7vgq04amhns76.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.thinkbloxph.chatwithai",
+            "certificate_hash": "67a434cf01064d50a670d9da74b55a082c22e5d4"
+          }
+        },
+        {
           "client_id": "824771532669-mnu0poodojgco7t760t3rs807pucmtal.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -22,7 +39,7 @@
           }
         },
         {
-          "client_id": "824771532669-0icg6140cu916b4rttickv4qcv206ntq.apps.googleusercontent.com",
+          "client_id": "824771532669-17n1qv6aiu5dk4ggq9plig7u55u1u4ut.apps.googleusercontent.com",
           "client_type": 3
         }
       ],

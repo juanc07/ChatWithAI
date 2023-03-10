@@ -46,6 +46,12 @@ class LoginScreenFragment: Fragment() {
     ): View? {
         _binding = FragmentLoginScreenBinding.inflate(inflater, container, false)
 
+        val packageManager = context?.packageManager
+        val packageName = context?.packageName
+        val packageInfo = packageManager?.getPackageInfo("com.thinkbloxph.chatwithai", 0)
+        val versionName = packageInfo?.versionName
+        binding.versionNameTextview.text = "v:$versionName"
+
         // this is called once here because this is the 1st screen or fragment that will always be loaded 1st
         // after main activity
         FirebaseApp.initializeApp(requireContext())

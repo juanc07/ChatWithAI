@@ -1,8 +1,11 @@
 package com.thinkbloxph.chatwithai
 
+import android.app.Activity
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import androidx.navigation.NavController
@@ -17,6 +20,7 @@ import com.google.android.material.navigation.NavigationView
 import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
 import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
+import java.security.MessageDigest
 
 const val TAG = "chatwitai"
 class MainActivity : AppCompatActivity() {
@@ -30,6 +34,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+
 
         /*val actionBar = supportActionBar
         actionBar?.setDisplayHomeAsUpEnabled(false)
@@ -63,6 +68,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         Log.w(TAG, "MainActivity loaded")
+
+        //createKeyHash(this, "com.thinkbloxph.chatwithai")
     }
 
     /*override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -120,4 +127,13 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfig)
         // TODO END STEP 9.6
     }
+
+    /*fun createKeyHash(activity: Activity, yourPackage: String) {
+        val info = activity.packageManager.getPackageInfo(yourPackage, PackageManager.GET_SIGNATURES)
+        for (signature in info.signatures) {
+            val md = MessageDigest.getInstance("SHA")
+            md.update(signature.toByteArray())
+            Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT))
+        }
+    }*/
 }
