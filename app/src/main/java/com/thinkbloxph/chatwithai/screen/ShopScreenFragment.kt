@@ -4,6 +4,7 @@ package com.thinkbloxph.chatwithai.screen
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -41,6 +42,11 @@ class ShopScreenFragment: Fragment() {
     private lateinit var subscriptionBtn:Button
     private lateinit var inAppPurchaseManager: InAppPurchaseManager
     private val userDb = UserDatabase()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -109,9 +115,20 @@ class ShopScreenFragment: Fragment() {
         //UIHelper.getInstance().showHideBackButton(false)
         //UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
 
-        UIHelper.getInstance().showHideActionBarWithoutBackButton(false,(requireActivity() as MainActivity).binding)
+        //UIHelper.getInstance().showHideActionBarWithoutBackButton(false,(requireActivity() as MainActivity).binding)
+        UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                requireActivity().onBackPressed() // Call onBackPressed() to handle the back button press in the fragment
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun showHideBottomNavigation(isShow: Boolean) {

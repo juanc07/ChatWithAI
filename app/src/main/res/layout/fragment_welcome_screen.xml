@@ -21,7 +21,7 @@
             android:id="@+id/chatWithAiTxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             android:fontFamily="sans-serif-black"
             android:text="Chat With AI"
@@ -39,7 +39,8 @@
             android:id="@+id/imageView3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/_256x256_chat_with_ai_no_bg_no_txt"
+            android:layout_marginTop="32dp"
+            android:src="@drawable/_183x159_chat_with_ai_no_bg_no_txt"
             app:layout_constraintBottom_toTopOf="@+id/welcomebackText"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.50"
@@ -50,7 +51,7 @@
             android:id="@+id/welcomebackText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:textColor="#BD770F"
             android:textSize="18sp"
             app:layout_constraintBottom_toTopOf="@+id/creditText"
@@ -63,7 +64,7 @@
             android:id="@+id/creditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="64dp"
+            android:layout_marginBottom="32dp"
             android:textColor="#FFC107"
             android:textSize="18sp"
             app:layout_constraintBottom_toTopOf="@+id/startChatBtn"
@@ -83,7 +84,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/creditText"
-            app:layout_constraintWidth_percent="0.5" />
+            app:layout_constraintWidth_percent="0.5"
+            />
 
         <Button
             android:id="@+id/buyCreditBtn"

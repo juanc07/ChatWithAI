@@ -22,7 +22,7 @@
             android:id="@+id/chatWithAiTxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             android:fontFamily="sans-serif-black"
             android:text="Chat With AI"
@@ -41,8 +41,8 @@
             android:id="@+id/chatBotImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:src="@drawable/_256x256_chat_with_ai_no_bg_no_txt"
+            android:layout_marginTop="32dp"
+            android:src="@drawable/_183x159_chat_with_ai_no_bg_no_txt"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
@@ -52,7 +52,7 @@
             android:id="@+id/buyCreditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="32dp"
             android:text="@string/refill_your_credit_now"
             android:textColor="#BD770F"
             android:textSize="20sp"
@@ -66,7 +66,7 @@
             android:id="@+id/creditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="32dp"
             android:text="Your Credit: 0"
             android:textColor="#FFC107"
             android:textSize="18sp"
@@ -86,32 +86,32 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/buyCreditText"
+            app:layout_constraintTop_toBottomOf="@+id/creditText"
             app:layout_constraintVertical_bias="0.5">
 
             <Button
-            android:id="@+id/buyBtn1"
+                android:id="@+id/buyBtn1"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
                 android:onClick="@{() -> shopScreenFragment.buyCreditTen()}"
-            android:layout_width="160dp"
-            android:layout_height="80dp"
-            android:text="10 Credits"
-            android:layout_margin="10dp"/>
+                android:text="10 Credits" />
 
             <Button
                 android:id="@+id/buyBtn2"
-                android:onClick="@{() -> shopScreenFragment.buyCreditFifty()}"
                 android:layout_width="160dp"
                 android:layout_height="80dp"
-                android:text="50 Credits"
-                android:layout_margin="10dp"/>
+                android:layout_margin="10dp"
+                android:onClick="@{() -> shopScreenFragment.buyCreditFifty()}"
+                android:text="50 Credits" />
 
             <Button
                 android:id="@+id/buyBtn3"
-                android:onClick="@{() -> shopScreenFragment.buyCreditOneHundred()}"
                 android:layout_width="160dp"
                 android:layout_height="80dp"
-                android:text="100 Credits"
-                android:layout_margin="10dp"/>
+                android:layout_margin="10dp"
+                android:onClick="@{() -> shopScreenFragment.buyCreditOneHundred()}"
+                android:text="100 Credits" />
 
             <Button
                 android:id="@+id/buySubscriptionBtn"
@@ -120,8 +120,7 @@
                 android:layout_margin="10dp"
                 android:backgroundTint="@{userViewModel.isSubscribed() ? @color/Subscribed : @color/UnSubscribed}"
                 android:onClick="@{() -> shopScreenFragment.buyMonthlySubscription()}"
-                android:text="@{userViewModel.isSubscribed() ? `Unsubscribe` : `Subscribed`}"
-                />
+                android:text="@{userViewModel.isSubscribed() ? `Unsubscribe` : `Subscribed`}" />
 
         </GridLayout>
 

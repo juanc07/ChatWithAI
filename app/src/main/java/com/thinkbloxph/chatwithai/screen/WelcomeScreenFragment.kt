@@ -3,10 +3,12 @@ package com.thinkbloxph.chatwithai.screen
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -37,6 +39,10 @@ class WelcomeScreenFragment: Fragment() {
     private lateinit var welcomeText:TextView
     private lateinit var creditText:TextView
     private lateinit var callback: OnBackPressedCallback
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -69,7 +75,6 @@ class WelcomeScreenFragment: Fragment() {
 
         Log.d(TAG, "[${INNER_TAG}]: check displayname: ${_userViewModel.getDisplayName()}}!")
         welcomeText.text = getString(R.string.welcome, _userViewModel.getDisplayName())
-        //creditText.text = getString(R.string.credit_remaining, _userViewModel.getCredit())
 
         _userViewModel.credit.observe(viewLifecycleOwner, Observer { credit ->
             // Do something with the new credit value
@@ -98,6 +103,16 @@ class WelcomeScreenFragment: Fragment() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                requireActivity().onBackPressed() // Call onBackPressed() to handle the back button press in the fragment
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         callback.isEnabled = false
@@ -105,11 +120,8 @@ class WelcomeScreenFragment: Fragment() {
 
     override fun onStart() {
         super.onStart()
-        // hide the action back button
-        //UIHelper.getInstance().showHideBackButton(false)
         //UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
-
-        UIHelper.getInstance().showHideActionBarWithoutBackButton(false,(requireActivity() as MainActivity).binding)
+        UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
     }
@@ -156,7 +168,7 @@ class WelcomeScreenFragment: Fragment() {
 
         when(currentProvider){
             "facebook.com" -> {
-                LoginManager.getInstance().logOut();
+                //LoginManager.getInstance().logOut();
                 Log.v(TAG, "[${INNER_TAG}]: facebook SignOut success!")
             }
             "google.com" -> {
@@ -173,8 +185,6 @@ class WelcomeScreenFragment: Fragment() {
     }
 
     fun buyCredit(){
-        Log.v(TAG, "[${INNER_TAG}]: buyCredit!")
         findNavController().navigate(R.id.action_welcomeScreenFragment_to_shopScreenFragment)
-
     }
 }

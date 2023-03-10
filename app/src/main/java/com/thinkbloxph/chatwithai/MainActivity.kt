@@ -1,13 +1,11 @@
 package com.thinkbloxph.chatwithai
 
-import android.app.Activity
-import android.content.pm.PackageManager
 import android.content.res.Resources
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
+import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
@@ -18,9 +16,6 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
-import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
-import com.thinkbloxph.chatwithai.helper.UIHelper
-import java.security.MessageDigest
 
 const val TAG = "chatwitai"
 class MainActivity : AppCompatActivity() {
@@ -36,6 +31,9 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
 
+        val actionBar = supportActionBar
+        actionBar?.setDisplayHomeAsUpEnabled(true)
+
         /*val actionBar = supportActionBar
         actionBar?.setDisplayHomeAsUpEnabled(false)
         actionBar?.setHomeButtonEnabled(false)*/
@@ -50,6 +48,7 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
 
         //setupActionBarWithNavController(navController, appBarConfiguration)
+        setupActionBarWithNavController(navController, appBarConfiguration)
         setupActionBar(navController, appBarConfiguration)
 
         setupNavigationMenu(navController)

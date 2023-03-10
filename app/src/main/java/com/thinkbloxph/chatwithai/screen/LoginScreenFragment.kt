@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -16,11 +18,9 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.thinkbloxph.chatwithai.R
 import com.thinkbloxph.chatwithai.TAG
-import com.thinkbloxph.chatwithai.api.FacebookApi
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentLoginScreenBinding
 import com.thinkbloxph.chatwithai.helper.FirebaseHelper
-import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.Provider
 import com.thinkbloxph.chatwithai.network.UserDatabase
@@ -37,8 +37,9 @@ class LoginScreenFragment: Fragment() {
     private lateinit var firebaseAuth: FirebaseAuth
     private val firebaseHelper = FirebaseHelper()
     private val userDb = UserDatabase()
+    private lateinit var callback: OnBackPressedCallback
 
-    private var facebookApi: FacebookApi? = null
+    //private var facebookApi: FacebookApi? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,9 +63,9 @@ class LoginScreenFragment: Fragment() {
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
 
-        facebookApi =
+        /*facebookApi =
             this.activity?.let { FacebookApi(it.application, this.requireActivity(), this) }
-        facebookApi?.init()
+        facebookApi?.init()*/
 
         this.activity?.let { GoogleApi.initInstance(it.application, this.requireActivity(), this) }
         GoogleApi.getInstance()?.init()
@@ -97,6 +98,16 @@ class LoginScreenFragment: Fragment() {
                 }
             })
         }
+
+        callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Handle the back button event here
+                // For example, you can show a dialog or navigate to a different screen
+                Log.v(TAG, "[${INNER_TAG}]: handleOnBackPressed event!!")
+                requireActivity().finishAffinity()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
     override fun onStart() {
@@ -105,7 +116,7 @@ class LoginScreenFragment: Fragment() {
         //UIHelper.getInstance().showHideBackButton(false)
     }
 
-    fun continueWithFB() {
+    /*fun continueWithFB() {
         facebookApi?.login(
             successCallback = { firebaseUser ->
                 if (firebaseUser != null) {
@@ -152,7 +163,7 @@ class LoginScreenFragment: Fragment() {
                 Log.d(TAG, "[${INNER_TAG}]: facebook Failed!")
             }
         )
-    }
+    }*/
 
     fun continueWithGoogle() {
         UIHelper.getInstance().showLoading()

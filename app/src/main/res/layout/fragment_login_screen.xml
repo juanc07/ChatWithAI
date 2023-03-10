@@ -17,6 +17,36 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <TextView
+            android:id="@+id/chatWithAiTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="Chat With AI"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="#6D2AE4"
+            android:textSize="35sp"
+            android:typeface="normal"
+            app:layout_constraintBottom_toTopOf="@+id/imageView3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintVertical_bias="0.3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="64dp"
+            android:src="@drawable/_183x159_chat_with_ai_no_bg_no_txt"
+            app:layout_constraintBottom_toTopOf="@+id/login_with_facebook"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/chatWithAiTxt"
+            app:layout_constraintVertical_bias="0.5" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/login_with_facebook"
             android:layout_width="match_parent"
@@ -24,7 +54,6 @@
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="16dp"
-            android:onClick="@{() -> loginScreenFragment.continueWithFB()}"
             android:text="@string/facebook_login"
             android:textSize="12sp"
             android:visibility="gone"
@@ -35,43 +64,13 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <TextView
-            android:id="@+id/chatWithAiTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:fontFamily="sans-serif-black"
-            android:text="Chat With AI"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:textColor="#6D2AE4"
-            android:textSize="35sp"
-            android:typeface="normal"
-            app:layout_constraintBottom_toTopOf="@+id/imageView3"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
-            android:id="@+id/imageView3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            android:src="@drawable/_256x256_chat_with_ai_no_bg_no_txt"
-            app:layout_constraintBottom_toTopOf="@+id/login_with_facebook"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/chatWithAiTxt"
-            app:layout_constraintVertical_bias="0.5" />
-
         <Button
             android:id="@+id/login_with_google"
             android:layout_width="match_parent"
             android:layout_height="65dp"
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
-            android:layout_marginBottom="64dp"
+            android:layout_marginBottom="80dp"
             android:onClick="@{() -> loginScreenFragment.continueWithGoogle()}"
             android:text="@string/google_login"
             android:textSize="12sp"
@@ -91,8 +90,8 @@
             android:layout_marginBottom="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
+            app:layout_constraintStart_toStartOf="parent"
+            />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

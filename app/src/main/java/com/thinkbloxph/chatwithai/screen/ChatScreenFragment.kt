@@ -245,11 +245,9 @@ class ChatScreenFragment: Fragment() {
 
     override fun onStart() {
         super.onStart()
-        // hide the action back button
-        //UIHelper.getInstance().showHideBackButton(true)
-
         // show action bar without back button
-        UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
+        //UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
+        UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
     }
