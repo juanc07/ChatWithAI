@@ -1,8 +1,6 @@
 package com.thinkbloxph.chatwithai.screen
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.*
 import android.widget.Button
@@ -66,6 +64,13 @@ class ChatScreenFragment: Fragment() {
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
 
+        messageListAdapter.typingStatusListener = object : TypingStatusListener {
+            override fun onTypingStatusChanged(isTyping: Boolean) {
+                // Notify the listener that the typing status has changed
+                sendButton.isEnabled = !isTyping
+            }
+        }
+
         // Access other views using binding here
         sendButton.setOnClickListener {
 
@@ -94,27 +99,29 @@ class ChatScreenFragment: Fragment() {
                                         // The messages are not empty
                                         // Do something with the messages here
                                         val firstMessage = messages[0].trim()
-                                        Handler(Looper.getMainLooper()).postDelayed({
-                                            progressDialog.hide()
-                                            val aiResponse = ChatMessage(firstMessage, "AI")
-                                            messageListAdapter.addMessage(aiResponse)
-                                            sendButton.isEnabled = true
 
-                                            if(!isSubscribed){
-                                                _userViewModel.getCredit()?.let { it1 ->
-                                                    userDb.updateCredit(it1,-1, callback = { newCredit, isSuccess->
-                                                        if(isSuccess){
-                                                            if (newCredit != null) {
-                                                                _userViewModel.setCredit(newCredit)
-                                                            }
-                                                            Log.d(TAG, "[${INNER_TAG}]: deduct credit success!")
-                                                        }else{
-                                                            Log.d(TAG, "[${INNER_TAG}]: deduct credit failed!")
+                                        progressDialog.hide()
+                                        val aiResponse = ChatMessage(firstMessage, "AI")
+                                        messageListAdapter.addMessage(aiResponse)
+                                        //sendButton.isEnabled = true
+
+                                        if(!isSubscribed){
+                                            // deduct each time the ai reply when not subscribed
+                                            _userViewModel.getCredit()?.let { it1 ->
+                                                userDb.updateCredit(it1,-1, callback = { newCredit, isSuccess->
+                                                    if(isSuccess){
+                                                        if (newCredit != null) {
+                                                            _userViewModel.setCredit(newCredit)
                                                         }
-                                                    })
-                                                }
+                                                        Log.d(TAG, "[${INNER_TAG}]: deduct credit success!")
+                                                    }else{
+                                                        Log.d(TAG, "[${INNER_TAG}]: deduct credit failed!")
+                                                    }
+                                                })
                                             }
-                                        }, 500) // delay AI response by 2 seconds
+                                        }else{
+                                            // user is subscribed no credit will be deducted
+                                        }
                                     } else {
                                         // The messages are empty
                                         // Handle this case here
@@ -182,7 +189,9 @@ class ChatScreenFragment: Fragment() {
             R.id.action_button -> {
                 // Handle button click here
                 Log.v(TAG, "[${INNER_TAG}]: click clear action bar button")
-                clearInput()
+                if(sendButton.isEnabled){
+                    clearInput()
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)

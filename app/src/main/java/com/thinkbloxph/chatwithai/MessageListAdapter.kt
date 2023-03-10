@@ -3,10 +3,13 @@ package com.thinkbloxph.chatwithai
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.thinkbloxph.chatwithai.screen.TypingStatusListener
 
 class MessageListAdapter(private val messageListRecyclerView: RecyclerView) : RecyclerView.Adapter<MessageViewHolder>() {
     private val messageList = mutableListOf<ChatMessage>()
+    var typingStatusListener: TypingStatusListener? = null // Add this property
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -21,6 +24,19 @@ class MessageListAdapter(private val messageListRecyclerView: RecyclerView) : Re
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val message = messageList[position]
         holder.bind(message)
+
+        if (holder.itemViewType == AI_MESSAGE_TYPE) {
+            holder.typingStatusListener = object : TypingStatusListener {
+                override fun onTypingStatusChanged(isTyping: Boolean) {
+                    // Notify the listener that the typing status has changed
+                    typingStatusListener?.onTypingStatusChanged(isTyping)
+                    if(!isTyping){
+                        val layoutManager = messageListRecyclerView.layoutManager as LinearLayoutManager
+                        layoutManager.scrollToPosition(messageList.size - 1)
+                    }
+                }
+            }
+        }
     }
 
     override fun getItemCount() = messageList.size
@@ -32,6 +48,16 @@ class MessageListAdapter(private val messageListRecyclerView: RecyclerView) : Re
         } else {
             AI_MESSAGE_TYPE
         }
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        // Cancel any running simulations
+        for (i in 0 until messageListRecyclerView.childCount) {
+            val child = messageListRecyclerView.getChildAt(i)
+            val viewHolder = messageListRecyclerView.getChildViewHolder(child) as MessageViewHolder
+            viewHolder.cancelSimulation()
+        }
+        super.onDetachedFromRecyclerView(recyclerView)
     }
 
     fun addMessage(message: ChatMessage) {
