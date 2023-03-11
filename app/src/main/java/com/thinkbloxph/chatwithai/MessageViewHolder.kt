@@ -16,7 +16,7 @@ class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val messageTextView: TextView = itemView.findViewById(R.id.message_text_view)
         val nameTextView: TextView = itemView.findViewById(R.id.name_text_view)
 
-        if( message.sender=="me"){
+        if(!message.simulateTyping || message.sender=="me"){
             messageTextView.text = message.text
             nameTextView.text = message.sender
         }else{

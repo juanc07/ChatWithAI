@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Button
+import android.widget.Switch
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -39,6 +40,7 @@ class ChatScreenFragment: Fragment() {
     private lateinit var sendButton: Button
     private lateinit var messageInputField: TextInputEditText
     private val userDb = UserDatabase()
+    private var simulateTyping: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +85,7 @@ class ChatScreenFragment: Fragment() {
                     val messageText = messageInputField.text.toString()
                     if (!messageText.isNullOrEmpty() && !messageText.isBlank()) {
                         sendButton.isEnabled = false
-                        val message = ChatMessage(messageText, "me")
+                        val message = ChatMessage(messageText, "me",false)
                         messageListAdapter.addMessage(message)
                         messageInputField.text?.clear()
                         progressDialog.show()
@@ -101,9 +103,10 @@ class ChatScreenFragment: Fragment() {
                                         val firstMessage = messages[0].trim()
 
                                         progressDialog.hide()
-                                        val aiResponse = ChatMessage(firstMessage, "AI")
+                                        val aiResponse = ChatMessage(firstMessage, "AI",simulateTyping)
                                         messageListAdapter.addMessage(aiResponse)
-                                        //sendButton.isEnabled = true
+                                        if(!simulateTyping)
+                                            sendButton.isEnabled = true
 
                                         if(!isSubscribed){
                                             // deduct each time the ai reply when not subscribed
@@ -181,6 +184,25 @@ class ChatScreenFragment: Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
+
+        // Find the toggle button view in the options menu item
+        val toggleButton = menu.findItem(R.id.action_toggle).actionView as Switch
+
+        // Set a listener for toggle button events
+        toggleButton.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                // Toggle button is ON
+                // Do something here
+                Log.v(TAG, "[${INNER_TAG}]: toggle on!")
+                simulateTyping = true
+            } else {
+                // Toggle button is OFF
+                Log.v(TAG, "[${INNER_TAG}]: toggle off!")
+                simulateTyping = false
+                // Do something here
+            }
+        }
+
         super.onCreateOptionsMenu(menu, inflater)
     }
 

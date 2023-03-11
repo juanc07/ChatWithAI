@@ -3,6 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.forage.MainActivity">
 
+    <item
+        android:id="@+id/action_toggle"
+        android:title="@string/toggle_title"
+        app:showAsAction="always"
+        app:actionViewClass="android.widget.Switch"
+        />
+
     <item android:id="@+id/action_button"
         android:title="Clear Message"
         android:icon="@drawable/baseline_clear_all_24"

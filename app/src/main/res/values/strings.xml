@@ -23,4 +23,5 @@
     <string name="unlimited_credit">Your Credit: Unlimited </string>
     <string name="refill_your_credit_now">Refill Your Credits Now!</string>
     <string name="out_of_credit_info">"Sorry, but you run out of credit. you need to buy credit to use this app or activate a subscription"</string>
+    <string name="toggle_title">instant reply</string>
 </resources>
