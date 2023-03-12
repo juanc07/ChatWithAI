@@ -1,0 +1,34 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The chat bubble shape -->
+    <item>
+        <shape
+            android:shape="rectangle"
+            android:padding="8dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:radius="16dp"
+            android:background="@drawable/chat_bubble_color">
+            <solid android:color="@android:color/white" />
+        </shape>
+    </item>
+
+    <!-- The chat bubble pointy tail -->
+    <item android:gravity="bottom|end">
+        <rotate
+            android:fromDegrees="45"
+            android:toDegrees="45"
+            android:pivotX="100%"
+            android:pivotY="100%">
+            <shape
+                android:shape="rectangle"
+                android:width="16dp"
+                android:height="16dp">
+                <solid android:color="@drawable/chat_bubble_color" />
+            </shape>
+        </rotate>
+    </item>
+
+</layer-list>

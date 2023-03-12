@@ -18,6 +18,7 @@
     <string name="purchase_failed">Purchase failed, please try again</string>
     <string name="already_subscribed">You are Subscribed already</string>
     <string name="dialog_ok">Ok</string>
+    <string name="share">Share</string>
     <string name="welcome">Welcome back, %s</string>
     <string name="credit_remaining">Your Credit: %d</string>
     <string name="unlimited_credit">Your Credit: Unlimited </string>

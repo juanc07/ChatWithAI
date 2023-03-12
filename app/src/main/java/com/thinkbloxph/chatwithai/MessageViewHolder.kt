@@ -1,7 +1,9 @@
 package com.thinkbloxph.chatwithai
 
+import android.content.Intent
 import android.os.Handler
 import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.thinkbloxph.chatwithai.screen.TypingStatusListener
@@ -11,8 +13,17 @@ class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     lateinit var handler:Handler
     lateinit var runnable:Runnable
     var typingStatusListener: TypingStatusListener? = null // Add this property
+    private val shareButton: Button? = itemView.findViewById(R.id.share_button)
 
     fun bind(message: ChatMessage) {
+
+        // Show/hide the share button depending on the message sender
+        if (message.sender == "me") {
+            shareButton?.visibility = View.GONE // Hide the share button for user messages
+        } else {
+            shareButton?.visibility = View.VISIBLE // Show the share button for AI messages
+        }
+
         val messageTextView: TextView = itemView.findViewById(R.id.message_text_view)
         val nameTextView: TextView = itemView.findViewById(R.id.name_text_view)
 
@@ -22,6 +33,17 @@ class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         }else{
             simulateTypingAnimation(messageTextView,message.text)
             nameTextView.text = message.sender
+        }
+
+        // Set the share button click listener
+        shareButton?.setOnClickListener {
+            // TODO: Handle the share button click event
+            // For example, you can create an Intent to share the message text using a share sheet:
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, message.text)
+            }
+            itemView.context.startActivity(Intent.createChooser(intent, "Share message via..."))
         }
     }
 
