@@ -3,8 +3,10 @@ package com.thinkbloxph.chatwithai.screen
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.Switch
+import androidx.appcompat.widget.AppCompatSpinner
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +22,7 @@ import com.google.firebase.ktx.Firebase
 import com.thinkbloxph.chatwithai.*
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentChatScreenBinding
+import com.thinkbloxph.chatwithai.helper.ReminderManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.UserDatabase
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
@@ -35,12 +38,37 @@ class ChatScreenFragment: Fragment() {
 
     private lateinit var firebaseAuth: FirebaseAuth
 
-    private lateinit var progressDialog: CustomCircularProgressIndicator
     private lateinit var messageListAdapter: MessageListAdapter
     private lateinit var sendButton: Button
     private lateinit var messageInputField: TextInputEditText
     private val userDb = UserDatabase()
     private var simulateTyping: Boolean = false
+
+    private lateinit var reminderManager:ReminderManager
+    private var currentPrompt:String = ""
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
+        val spinnerState = Bundle().apply {
+            putInt("selected_item_position", spinnerItem.selectedItemPosition)
+        }
+        outState.putBundle("spinner_state", spinnerState)
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+
+        if (savedInstanceState != null) {
+            val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
+            val spinnerState = savedInstanceState.getBundle("spinner_state")
+            if (spinnerState != null) {
+                spinnerItem.setSelection(spinnerState.getInt("selected_item_position"))
+            }
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +82,9 @@ class ChatScreenFragment: Fragment() {
         _binding = FragmentChatScreenBinding.inflate(inflater, container, false)
         firebaseAuth = Firebase.auth
 
-        progressDialog = CustomCircularProgressIndicator(requireActivity())
+        UIHelper.initInstance(this.requireActivity(), this)
+        UIHelper.getInstance()?.init()
+
         messageListAdapter = MessageListAdapter(binding.messageListRecyclerView)
         binding.messageListRecyclerView.adapter = messageListAdapter
         binding.messageListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -62,6 +92,8 @@ class ChatScreenFragment: Fragment() {
         // Set other view references using binding
         messageInputField = binding.messageInputField
         sendButton = binding.sendButton
+
+        reminderManager = ReminderManager.getInstance(requireContext())
 
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
@@ -88,46 +120,76 @@ class ChatScreenFragment: Fragment() {
                         val message = ChatMessage(messageText, "me",false)
                         messageListAdapter.addMessage(message)
                         messageInputField.text?.clear()
-                        progressDialog.show()
+                        UIHelper.getInstance().showLoading()
+                        val isReminder = false
+                        //val (isReminder, reminderText) = checkIfReminder(messageText)
 
-                        val openAI = OpenAIAPI(lifecycleScope,requireContext())
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            try {
-                                val messages = openAI.getCompletion(messageText)
-                                // Update UI with messages
-                                withContext(Dispatchers.Main) {
-                                    //println(messages)
-                                    if (messages.isNotEmpty()) {
-                                        // The messages are not empty
-                                        // Do something with the messages here
-                                        val firstMessage = messages[0].trim()
+                        if(!isReminder) {
+                            val openAI = OpenAIAPI(lifecycleScope, requireContext())
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                try {
+                                    val messages = openAI.getCompletion(messageText,currentPrompt)
+                                    // Update UI with messages
+                                    withContext(Dispatchers.Main) {
+                                        //println(messages)
+                                        if (messages.isNotEmpty()) {
+                                            // The messages are not empty
+                                            // Do something with the messages here
+                                            val firstMessage = messages[0].trim()
 
-                                        progressDialog.hide()
-                                        val aiResponse = ChatMessage(firstMessage, "AI",simulateTyping)
-                                        messageListAdapter.addMessage(aiResponse)
-                                        if(!simulateTyping)
-                                            sendButton.isEnabled = true
+                                            UIHelper.getInstance().hideLoading()
+                                            val aiResponse =
+                                                ChatMessage(firstMessage, "AI", simulateTyping)
+                                            messageListAdapter.addMessage(aiResponse)
+                                            if (!simulateTyping)
+                                                sendButton.isEnabled = true
 
-                                        if(!isSubscribed){
-                                            // deduct each time the ai reply when not subscribed
-                                            _userViewModel.getCredit()?.let { it1 ->
-                                                userDb.updateCredit(it1,-1, callback = { newCredit, isSuccess->
-                                                    if(isSuccess){
-                                                        if (newCredit != null) {
-                                                            _userViewModel.setCredit(newCredit)
-                                                        }
-                                                        Log.d(TAG, "[${INNER_TAG}]: deduct credit success!")
-                                                    }else{
-                                                        Log.d(TAG, "[${INNER_TAG}]: deduct credit failed!")
-                                                    }
-                                                })
+                                            if (!isSubscribed) {
+                                                // deduct each time the ai reply when not subscribed
+                                                _userViewModel.getCredit()?.let { it1 ->
+                                                    userDb.updateCredit(
+                                                        it1,
+                                                        -1,
+                                                        callback = { newCredit, isSuccess ->
+                                                            if (isSuccess) {
+                                                                if (newCredit != null) {
+                                                                    _userViewModel.setCredit(
+                                                                        newCredit
+                                                                    )
+                                                                }
+                                                                Log.d(
+                                                                    TAG,
+                                                                    "[${INNER_TAG}]: deduct credit success!"
+                                                                )
+                                                            } else {
+                                                                Log.d(
+                                                                    TAG,
+                                                                    "[${INNER_TAG}]: deduct credit failed!"
+                                                                )
+                                                            }
+                                                        })
+                                                }
+                                            } else {
+                                                // user is subscribed no credit will be deducted
                                             }
-                                        }else{
-                                            // user is subscribed no credit will be deducted
+                                        } else {
+                                            // The messages are empty
+                                            // Handle this case here
+                                            UIHelper.getInstance().hideLoading()
+                                            MaterialAlertDialogBuilder(requireContext())
+                                                .setTitle("Oops!")
+                                                .setMessage("Something went wrong. Please try again later.")
+                                                .setPositiveButton("OK") { dialog, _ ->
+                                                    sendButton.isEnabled = true
+                                                    dialog.dismiss()
+                                                }
+                                                .show()
                                         }
-                                    } else {
-                                        // The messages are empty
-                                        // Handle this case here
+                                    }
+                                } catch (e: Exception) {
+                                    UIHelper.getInstance().hideLoading()
+                                    // Show dialog to notify user of error
+                                    withContext(Dispatchers.Main) {
                                         MaterialAlertDialogBuilder(requireContext())
                                             .setTitle("Oops!")
                                             .setMessage("Something went wrong. Please try again later.")
@@ -138,21 +200,14 @@ class ChatScreenFragment: Fragment() {
                                             .show()
                                     }
                                 }
-                            } catch (e: Exception) {
-                                // Show dialog to notify user of error
-                                withContext(Dispatchers.Main) {
-                                    MaterialAlertDialogBuilder(requireContext())
-                                        .setTitle("Oops!")
-                                        .setMessage("Something went wrong. Please try again later.")
-                                        .setPositiveButton("OK") { dialog, _ ->
-                                            sendButton.isEnabled = true
-                                            dialog.dismiss()
-                                        }
-                                        .show()
-                                }
                             }
+                        }else{
+                            /*if(!reminderText.isNullOrEmpty()){
+                                val message = ChatMessage(reminderText, "AI",false)
+                                messageListAdapter.addMessage(message)
+                                sendButton.isEnabled = true
+                            }*/
                         }
-
                     }else if( messageText.contains(" ")){
                         showDialog("Hey Buddy","Please enter a message!")
                     }
@@ -164,9 +219,12 @@ class ChatScreenFragment: Fragment() {
                 }else {
                     // The messages are empty
                     // Handle this case here
+                    UIHelper.getInstance().hideLoading()
                     showDialog("Sorry Buddy",getString(R.string.out_of_credit_info))
                 }
             }else{
+                UIHelper.getInstance().hideLoading()
+
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Oops!")
                     .setMessage("Something went wrong. Credit not found. Please try again later.")
@@ -185,21 +243,68 @@ class ChatScreenFragment: Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
 
-        // Find the toggle button view in the options menu item
-        val toggleButton = menu.findItem(R.id.action_toggle).actionView as Switch
+        currentPrompt = getString(R.string.direct_to_point)
 
-        // Set a listener for toggle button events
-        toggleButton.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) {
-                // Toggle button is ON
-                // Do something here
-                Log.v(TAG, "[${INNER_TAG}]: toggle on!")
-                simulateTyping = true
-            } else {
-                // Toggle button is OFF
-                Log.v(TAG, "[${INNER_TAG}]: toggle off!")
-                simulateTyping = false
-                // Do something here
+        val spinnerItem = menu.findItem(R.id.action_spinner)
+        val spinner = spinnerItem.actionView as AppCompatSpinner
+        val choices = resources.getStringArray(R.array.choices_array)
+        //val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, choices)
+        val adapter = ArrayAdapter(requireContext(), R.layout.spinner_item_layout, choices)
+        spinner.adapter = adapter
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val choice = choices[position]
+
+                when (choice) {
+                    "Default!" -> {
+                        currentPrompt = getString(R.string.direct_to_point)
+                        Log.d("SpinnerSelection", "Selected Hello!")
+                    }
+                    "Direct to point" -> {
+                        currentPrompt = getString(R.string.direct_to_point)
+                        Log.d("SpinnerSelection", "Selected Hello2!")
+                    }
+                    "Talking to kids" -> {
+                        currentPrompt = getString(R.string.talking_to_kids)
+                        Log.d("SpinnerSelection", "Selected Hello3!")
+                    }
+                    "As a Friend" -> {
+                        currentPrompt = getString(R.string.as_a_friend)
+                        Log.d("SpinnerSelection", "Selected Hello4!")
+                    }
+                    "Markdown Format" -> {
+                        currentPrompt = getString(R.string.format_markdown)
+                        Log.d("SpinnerSelection", "Selected Hello5!")
+                    }
+                    "Punchy and Attention Grabber" -> {
+                        currentPrompt = getString(R.string.punchy_and_attention_grabber)
+                        Log.d("SpinnerSelection", "Selected Hello6!")
+                    }
+                    "Persuasive and storyteller" -> {
+                        currentPrompt = getString(R.string.persuasive_and_story_teller)
+                        Log.d("SpinnerSelection", "Selected Hello7!")
+                    }
+                    "Clear and easy" -> {
+                        currentPrompt = getString(R.string.clear_and_easy)
+                        Log.d("SpinnerSelection", "Selected Hello8!")
+                    }
+                    "Creative and descriptive" -> {
+                        currentPrompt = getString(R.string.creative_and_descriptive)
+                        Log.d("SpinnerSelection", "Selected Hello9!")
+                    }
+                    "Professional and informative" -> {
+                        currentPrompt = getString(R.string.professional_and_informative)
+                        Log.d("SpinnerSelection", "Selected Hello10!")
+                    }
+                    "Formal complex and in-depth" -> {
+                        currentPrompt = getString(R.string.formal_complex_in_depth)
+                        Log.d("SpinnerSelection", "Selected How are you?")
+                    }
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // do nothing
             }
         }
 
@@ -310,5 +415,26 @@ class ChatScreenFragment: Fragment() {
             }
         }
         firebaseAuth.signOut()
+    }
+
+    fun checkIfReminder(input:String):Pair<Boolean, String?>{
+        // Parse the input to get the reminder time and message
+        val (reminderTime, reminderText) = reminderManager.parseReminderText(input)
+
+        // If the reminder time was successfully parsed, set the reminder
+        return if (reminderTime != null) {
+            val title = "Reminder!"
+            reminderManager.setReminder(reminderTime, title)
+
+            // Print the confirmation message
+            println(reminderText)
+            Log.d(TAG, "[${INNER_TAG}]:checkIfReminder: ${reminderText}}!")
+            Pair(true, reminderText)
+        } else {
+            // Print the error message
+            println(reminderText)
+            Log.d(TAG, "[${INNER_TAG}]:checkIfReminder: ${reminderText}}!")
+            Pair(false, null)
+        }
     }
 }

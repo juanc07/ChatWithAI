@@ -1,0 +1,15 @@
+<resources>
+    <string name="choices_prompt">Choose a starting point:</string>
+    <string-array name="choices_array">
+        <item>Direct to point</item>
+        <item>Talking to kids</item>
+        <item>As a Friend</item>
+        <item>Markdown Format</item>
+        <item>Punchy and Attention Grabber</item>
+        <item>Persuasive and storyteller</item>
+        <item>Clear and easy</item>
+        <item>Creative and descriptive</item>
+        <item>Professional and informative</item>
+        <item>Formal complex and in-depth</item>
+    </string-array>
+</resources>

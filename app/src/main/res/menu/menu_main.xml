@@ -4,11 +4,10 @@
     tools:context="com.example.forage.MainActivity">
 
     <item
-        android:id="@+id/action_toggle"
-        android:title="@string/toggle_title"
+        android:id="@+id/action_spinner"
+        android:title="@string/choices_prompt"
         app:showAsAction="always"
-        app:actionViewClass="android.widget.Switch"
-        />
+        app:actionViewClass="androidx.appcompat.widget.AppCompatSpinner" />
 
     <item android:id="@+id/action_button"
         android:title="Clear Message"

@@ -11,7 +11,9 @@ import java.io.IOException
 import retrofit2.HttpException
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.Context
+import android.util.Log
 
+private const val INNER_TAG = "OpenAIAPI"
 class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: Context) {
 
     private val openAIAPIService: OpenAIAPIService by lazy {
@@ -29,10 +31,30 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
             .create(OpenAIAPIService::class.java)
     }
 
-    suspend fun getCompletion(message:String): List<String> {
+    suspend fun getCompletion(message:String,prompt:String): List<String> {
+        Log.d(TAG, "[INNER_TAG}]: prompt: ${prompt}")
         val json = JsonObject().apply {
             addProperty("model", "gpt-3.5-turbo")
+            /*
+            addProperty("temperature", 0.5)
+            addProperty("max_tokens", 60)
+            addProperty("top_p", 1.0)
+            addProperty("frequency_penalty", 0.0)
+            addProperty("presence_penalty", 0.0)*/
+            /*add("messages", JsonArray().apply {
+                add(JsonObject().apply {
+                    addProperty("role", "user")
+                    addProperty("role", "system")
+                    addProperty("content", message)
+                })
+            })*/
+
             add("messages", JsonArray().apply {
+                add(JsonObject().apply {
+                    addProperty("role", "system")
+                    addProperty("content", prompt)
+                })
+
                 add(JsonObject().apply {
                     addProperty("role", "user")
                     addProperty("content", message)
@@ -42,6 +64,7 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
 
         return withContext(Dispatchers.IO) {
             try {
+                //val call = openAIAPIService.getCompletion(json)
                 val call = openAIAPIService.getCompletion(json)
                 val response = call.execute()
 

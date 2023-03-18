@@ -11,10 +11,10 @@ android {
 
     defaultConfig {
         applicationId "com.thinkbloxph.chatwithai"
-        minSdk 24
+        minSdk 26
         targetSdk 33
-        versionCode 14
-        versionName "1.0.13"
+        versionCode 16
+        versionName "1.0.15"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -89,4 +89,7 @@ dependencies {
 
     // billing
     implementation 'com.android.billingclient:billing:4.0.0'
+
+    implementation 'joda-time:joda-time:2.10.10'
+
 }
