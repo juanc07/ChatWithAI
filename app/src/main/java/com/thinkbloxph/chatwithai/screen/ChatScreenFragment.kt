@@ -22,6 +22,7 @@ import com.google.firebase.ktx.Firebase
 import com.thinkbloxph.chatwithai.*
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentChatScreenBinding
+import com.thinkbloxph.chatwithai.helper.MessageCollector
 import com.thinkbloxph.chatwithai.helper.ReminderManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.UserDatabase
@@ -128,19 +129,39 @@ class ChatScreenFragment: Fragment() {
                             val openAI = OpenAIAPI(lifecycleScope, requireContext())
                             lifecycleScope.launch(Dispatchers.IO) {
                                 try {
-                                    val messages = openAI.getCompletion(messageText,currentPrompt)
+                                    var messages: List<String>? = null
+
+                                    if(currentPrompt == getString(R.string.chatty)){
+                                        if(!MessageCollector.getPreviousMessages().isNullOrEmpty()){
+                                            if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
+                                                messages = openAI.getCompletion(messageText,currentPrompt,MessageCollector.getPreviousMessages())
+                                            }else{
+                                                messages = openAI.getCompletion(messageText,currentPrompt,openAI.summarizeText(MessageCollector.getPreviousMessages()))
+                                            }
+                                        }else{
+                                            messages = openAI.getCompletion(messageText,currentPrompt,null)
+                                        }
+                                    }else{
+                                        messages = openAI.getCompletion(messageText,currentPrompt,null)
+                                    }
+
                                     // Update UI with messages
                                     withContext(Dispatchers.Main) {
                                         //println(messages)
-                                        if (messages.isNotEmpty()) {
+                                        if (!messages.isNullOrEmpty()) {
                                             // The messages are not empty
                                             // Do something with the messages here
-                                            val firstMessage = messages[0].trim()
+                                            val firstMessage = messages[0]?.trim()
+                                            if (firstMessage != null) {
+                                                MessageCollector.addMessage(firstMessage)
+                                            }
 
                                             UIHelper.getInstance().hideLoading()
                                             val aiResponse =
-                                                ChatMessage(firstMessage, "AI", simulateTyping)
-                                            messageListAdapter.addMessage(aiResponse)
+                                                firstMessage?.let { it1 -> ChatMessage(it1, "AI", simulateTyping) }
+                                            if (aiResponse != null) {
+                                                messageListAdapter.addMessage(aiResponse)
+                                            }
                                             if (!simulateTyping)
                                                 sendButton.isEnabled = true
 
@@ -243,7 +264,7 @@ class ChatScreenFragment: Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
 
-        currentPrompt = getString(R.string.direct_to_point)
+        currentPrompt = getString(R.string.chatty)
 
         val spinnerItem = menu.findItem(R.id.action_spinner)
         val spinner = spinnerItem.actionView as AppCompatSpinner
@@ -257,7 +278,7 @@ class ChatScreenFragment: Fragment() {
 
                 when (choice) {
                     "Default!" -> {
-                        currentPrompt = getString(R.string.direct_to_point)
+                        currentPrompt = getString(R.string.chatty)
                         Log.d("SpinnerSelection", "Selected Hello!")
                     }
                     "Direct to point" -> {
@@ -390,6 +411,7 @@ class ChatScreenFragment: Fragment() {
 
     fun clearInput(){
         messageListAdapter.clearMessages()
+        MessageCollector.clearMessages()
     }
 
     fun signout(){
