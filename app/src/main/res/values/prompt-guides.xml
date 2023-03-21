@@ -10,4 +10,5 @@
     <string name="creative_and_descriptive">voice and style guide: use descriptive and vivid language to create a sense of imagery and atmosphere. use literary devices such as similes, metaphors, and personification to add depth and interest to the writing. write in a way that is both imaginative and evocative</string>
     <string name="professional_and_informative">voice and style guide: use a professional and informative tone. use industry-specific language and terminology. provide detailed and accurate information. use statistics, research and expert opinions to back up you argument. write in a way that is both informative and knowledgeable</string>
     <string name="formal_complex_in_depth">voice and style guide: Use a formal and academic tone paired with sophisticated vocabulary and grammar. provide a thorough and in-depth analysis of the subject matter. explain complex scientific concepts in a clear and accessible way. use examples from a variety of fields, such as psychology and cognitive science. present counter-arguments and dissenting opinions in a balance and objective way</string>
+    <string name="summarize">Summarize</string>
 </resources>

@@ -136,11 +136,14 @@ class ChatScreenFragment: Fragment() {
                                             if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
                                                 messages = openAI.getCompletion(messageText,currentPrompt,MessageCollector.getPreviousMessages())
                                             }else{
-                                                messages = openAI.getCompletion(messageText,currentPrompt,openAI.summarizeText(MessageCollector.getPreviousMessages()))
+                                                var prevMessage = openAI.summarizeText(MessageCollector.getPreviousMessages()).toString()
+                                                messages = openAI.getCompletion(messageText,currentPrompt,prevMessage)
                                             }
                                         }else{
                                             messages = openAI.getCompletion(messageText,currentPrompt,null)
                                         }
+                                    }else if(currentPrompt == getString(R.string.summarize)){
+                                        messages= openAI.summarizeText(messageText)
                                     }else{
                                         messages = openAI.getCompletion(messageText,currentPrompt,null)
                                     }
@@ -277,49 +280,53 @@ class ChatScreenFragment: Fragment() {
                 val choice = choices[position]
 
                 when (choice) {
-                    "Default!" -> {
+                    "Chatty" -> {
                         currentPrompt = getString(R.string.chatty)
-                        Log.d("SpinnerSelection", "Selected Hello!")
+                        Log.d("SpinnerSelection", "Selected Chatty!")
                     }
-                    "Direct to point" -> {
+                    "Direct to the point" -> {
                         currentPrompt = getString(R.string.direct_to_point)
-                        Log.d("SpinnerSelection", "Selected Hello2!")
+                        Log.d("SpinnerSelection", "Selected Direct to the point!")
                     }
                     "Talking to kids" -> {
                         currentPrompt = getString(R.string.talking_to_kids)
-                        Log.d("SpinnerSelection", "Selected Hello3!")
+                        Log.d("SpinnerSelection", "Selected Talking to kids!")
                     }
                     "As a Friend" -> {
                         currentPrompt = getString(R.string.as_a_friend)
-                        Log.d("SpinnerSelection", "Selected Hello4!")
+                        Log.d("SpinnerSelection", "Selected As a Friend!")
                     }
                     "Markdown Format" -> {
                         currentPrompt = getString(R.string.format_markdown)
-                        Log.d("SpinnerSelection", "Selected Hello5!")
+                        Log.d("SpinnerSelection", "Selected Markdown Format!")
                     }
                     "Punchy and Attention Grabber" -> {
                         currentPrompt = getString(R.string.punchy_and_attention_grabber)
-                        Log.d("SpinnerSelection", "Selected Hello6!")
+                        Log.d("SpinnerSelection", "Selected Punchy and Attention Grabber!")
                     }
                     "Persuasive and storyteller" -> {
                         currentPrompt = getString(R.string.persuasive_and_story_teller)
-                        Log.d("SpinnerSelection", "Selected Hello7!")
+                        Log.d("SpinnerSelection", "Selected Persuasive and storyteller!")
                     }
                     "Clear and easy" -> {
                         currentPrompt = getString(R.string.clear_and_easy)
-                        Log.d("SpinnerSelection", "Selected Hello8!")
+                        Log.d("SpinnerSelection", "Selected Clear and easy!")
                     }
                     "Creative and descriptive" -> {
                         currentPrompt = getString(R.string.creative_and_descriptive)
-                        Log.d("SpinnerSelection", "Selected Hello9!")
+                        Log.d("SpinnerSelection", "Selected Creative and descriptive!")
                     }
                     "Professional and informative" -> {
                         currentPrompt = getString(R.string.professional_and_informative)
-                        Log.d("SpinnerSelection", "Selected Hello10!")
+                        Log.d("SpinnerSelection", "Selected Professional and informative!")
                     }
                     "Formal complex and in-depth" -> {
                         currentPrompt = getString(R.string.formal_complex_in_depth)
-                        Log.d("SpinnerSelection", "Selected How are you?")
+                        Log.d("SpinnerSelection", "Selected Formal complex and in-depth!")
+                    }
+                    "Summarize" -> {
+                        currentPrompt = getString(R.string.summarize)
+                        Log.d("SpinnerSelection", "Selected Summarize!")
                     }
                 }
             }
@@ -407,9 +414,10 @@ class ChatScreenFragment: Fragment() {
         UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
+        clearInput()
     }
 
-    fun clearInput(){
+    private fun clearInput(){
         messageListAdapter.clearMessages()
         MessageCollector.clearMessages()
     }

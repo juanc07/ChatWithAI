@@ -111,31 +111,42 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
         return tokens.size <= 2048
     }
 
-    suspend fun summarizeText(text: String): String? {
-        val prompt = "Please summarize the following text:\n$text"
+    suspend fun summarizeText(message:String): List<String> {
+        val commandMsg = "Please summarize the following text:\n$message"
+        Log.d(TAG, "[INNER_TAG}]: commandMsg: ${commandMsg}")
         val json = JsonObject().apply {
-            addProperty("model", "text-davinci-002")
+            addProperty("model", "gpt-3.5-turbo")
             addProperty("temperature", 0.5)
             addProperty("max_tokens", 60)
             addProperty("top_p", 1.0)
             addProperty("frequency_penalty", 0.0)
             addProperty("presence_penalty", 0.0)
-            add("prompt", JsonArray().apply {
-                add(prompt)
+
+            add("messages", JsonArray().apply {
+                add(JsonObject().apply {
+                    addProperty("role", "system")
+                    addProperty("content", "Return only the main response. remove the pre-text and post-text")
+                })
+
+                add(JsonObject().apply {
+                    addProperty("role", "user")
+                    addProperty("content", commandMsg)
+                })
             })
         }
 
         return withContext(Dispatchers.IO) {
             try {
+                //val call = openAIAPIService.getCompletion(json)
                 val call = openAIAPIService.getCompletion(json)
                 val response = call.execute()
 
                 if (response.isSuccessful) {
                     val result = response.body()
                     val choices = result?.getAsJsonArray("choices")
-                    choices!!.first().asJsonObject.getAsJsonObject("text").asString
+                    choices!!.map { it.asJsonObject.getAsJsonObject("message").get("content").asString }
                 } else {
-                    null
+                    emptyList()
                 }
             } catch (e: IOException) {
                 withContext(Dispatchers.Main) {
@@ -145,7 +156,7 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
                         .setPositiveButton("OK", null)
                         .show()
                 }
-                null
+                emptyList()
             } catch (e: HttpException) {
                 withContext(Dispatchers.Main) {
                     MaterialAlertDialogBuilder(context)
@@ -154,10 +165,9 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
                         .setPositiveButton("OK", null)
                         .show()
                 }
-                null
+                emptyList()
             }
         }
     }
-
 }
 
