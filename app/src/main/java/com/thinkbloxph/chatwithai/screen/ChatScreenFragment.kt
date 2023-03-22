@@ -27,6 +27,7 @@ import com.thinkbloxph.chatwithai.*
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentChatScreenBinding
 import com.thinkbloxph.chatwithai.helper.*
+import com.thinkbloxph.chatwithai.`interface`.TypingStatusListener
 import com.thinkbloxph.chatwithai.network.UserDatabase
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
 import kotlinx.coroutines.Dispatchers
@@ -189,10 +190,11 @@ class ChatScreenFragment: Fragment() {
 
                                             if (!isSubscribed) {
                                                 // deduct each time the ai reply when not subscribed
+                                                var creditToDeduct = (_userViewModel.getCreditUsage()!! * -1).toInt()
                                                 _userViewModel.getCredit()?.let { it1 ->
                                                     userDb.updateCredit(
                                                         it1,
-                                                        -1,
+                                                        creditToDeduct,
                                                         callback = { newCredit, isSuccess ->
                                                             if (isSuccess) {
                                                                 if (newCredit != null) {

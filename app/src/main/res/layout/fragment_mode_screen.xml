@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.thinkbloxph.pinoymassageapp.screen.ModeScreenFragment">
+
+    <data>
+        <variable
+            name="userViewModel"
+            type="com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel" />
+        <variable
+            name="modeScreenFragment"
+            type="com.thinkbloxph.chatwithai.screen.ModeScreenFragment" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <TextView
+            android:id="@+id/chatWithAiTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="64dp"
+            android:fontFamily="sans-serif-black"
+            android:text="Choose Mode"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="#6D2AE4"
+            android:textSize="30sp"
+
+            android:typeface="normal"
+            app:layout_constraintBottom_toTopOf="@+id/gridLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <GridLayout
+            android:id="@+id/gridLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="100dp"
+            android:columnCount="2"
+            android:rowCount="4"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/chatWithAiTxt">
+
+            <Button
+                android:id="@+id/buyBtn1"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/translate" />
+
+            <Button
+                android:id="@+id/buyBtn2"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/todolist" />
+
+            <Button
+                android:id="@+id/buyBtn3"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/create_essay" />
+
+            <Button
+                android:id="@+id/buyBtn4"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/spelling" />
+
+            <Button
+                android:id="@+id/buyBtn5"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/search" />
+
+            <Button
+                android:id="@+id/buyBtn6"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/summarize_text"/>
+
+            <Button
+                android:id="@+id/buyBtn7"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/create_email" />
+
+            <Button
+                android:id="@+id/buyBtn8"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/assistant" />
+
+        </GridLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

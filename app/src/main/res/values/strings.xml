@@ -25,4 +25,12 @@
     <string name="refill_your_credit_now">Refill Your Credits Now!</string>
     <string name="out_of_credit_info">"Sorry, but you run out of credit. you need to buy credit to use this app or activate a subscription"</string>
     <string name="toggle_title">instant reply</string>
+    <string name="translate">Translate</string>
+    <string name="todolist">Todo List</string>
+    <string name="create_essay">Create Essay</string>
+    <string name="spelling">Spelling</string>
+    <string name="search">Search</string>
+    <string name="summarize_text">Summarize</string>
+    <string name="create_email">Create Email</string>
+    <string name="assistant">Assistant</string>
 </resources>

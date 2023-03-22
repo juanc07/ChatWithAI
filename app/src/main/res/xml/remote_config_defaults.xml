@@ -16,5 +16,9 @@
         <key>enable_search</key>
         <value>true</value>
     </entry>
+    <entry>
+        <key>credit_usage</key>
+        <value>1</value>
+    </entry>
     <!-- Add more parameters here -->
 </defaultsMap>

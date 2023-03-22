@@ -1,11 +1,10 @@
 package com.thinkbloxph.chatwithai
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.thinkbloxph.chatwithai.screen.TypingStatusListener
+import com.thinkbloxph.chatwithai.`interface`.TypingStatusListener
 
 class MessageListAdapter(private val messageListRecyclerView: RecyclerView) : RecyclerView.Adapter<MessageViewHolder>() {
     private val messageList = mutableListOf<ChatMessage>()

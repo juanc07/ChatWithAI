@@ -8,12 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
-import com.facebook.login.LoginManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -147,6 +145,9 @@ class WelcomeScreenFragment: Fragment() {
 
                 _userViewModel.setEnableSearch(RemoteConfigManager.getBoolean("enable_search"))
                 Log.d(TAG, "enableSearch: ${_userViewModel.getEnableSearch()}")
+
+                _userViewModel.setCreditUsage(RemoteConfigManager.getLong("credit_usage"))
+                Log.d(TAG, "creditUsage: ${_userViewModel.getCreditUsage()}")
             }else{
                 // default
                 _userViewModel.setSearchNumResults(3)
@@ -154,6 +155,9 @@ class WelcomeScreenFragment: Fragment() {
 
                 _userViewModel.setEnableSearch(true)
                 Log.d(TAG, "enableSearch: ${_userViewModel.getEnableSearch()}")
+
+                _userViewModel.setCreditUsage(1)
+                Log.d(TAG, "creditUsage: ${_userViewModel.getCreditUsage()}")
             }
         }
     }
@@ -188,6 +192,10 @@ class WelcomeScreenFragment: Fragment() {
 
     fun goToLogin() {
         findNavController().navigate(R.id.action_welcomeScreenFragment_to_chatScreenFragment)
+    }
+
+    fun goToModeSelection() {
+        findNavController().navigate(R.id.action_welcomeScreenFragment_to_modeScreenFragment)
     }
 
     fun signout(){

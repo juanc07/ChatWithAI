@@ -39,9 +39,20 @@
         <action
             android:id="@+id/action_welcomeScreenFragment_to_shopScreenFragment"
             app:destination="@id/shopScreenFragment" />
+        <action
+            android:id="@+id/action_welcomeScreenFragment_to_modeScreenFragment"
+            app:destination="@id/modeScreenFragment" />
     </fragment>
     <fragment
         android:id="@+id/shopScreenFragment"
         android:name="com.thinkbloxph.chatwithai.screen.ShopScreenFragment"
         android:label="@string/app_name_inner" />
+    <fragment
+        android:id="@+id/modeScreenFragment"
+        android:name="com.thinkbloxph.chatwithai.screen.ModeScreenFragment"
+        android:label="ModeScreenFragment" >
+        <action
+            android:id="@+id/action_modeScreenFragment_to_chatScreenFragment"
+            app:destination="@id/chatScreenFragment" />
+    </fragment>
 </navigation>

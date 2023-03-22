@@ -41,6 +41,9 @@ class UserViewModel : ViewModel() {
     private val _enableSearch = MutableLiveData<Boolean>()
     val enableSearch: LiveData<Boolean> = _enableSearch
 
+    private val _creditUsage = MutableLiveData<Long>()
+    val creditUsage: LiveData<Long> = _creditUsage
+
     fun setFirebaseUserId(firebaseUserId: String) {
         _firebaseUserId.value = firebaseUserId
     }
@@ -137,6 +140,14 @@ class UserViewModel : ViewModel() {
         return _enableSearch.value
     }
 
+    fun setCreditUsage(value: Long) {
+        _creditUsage.value = value
+    }
+
+    fun getCreditUsage(): Long? {
+        return _creditUsage.value
+    }
+
     fun reset() {
         _phoneNumber.value = ""
         _facebookUserId.value = ""
@@ -145,5 +156,6 @@ class UserViewModel : ViewModel() {
         _email.value = ""
         _enableSearch.value = true
         _searchNumResults.value = 3
+        _creditUsage.value = 1
     }
 }
