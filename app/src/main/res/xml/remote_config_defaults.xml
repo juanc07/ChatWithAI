@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <entry>
+        <key>welcome_message</key>
+        <value>Welcome to Chat with AI!</value>
+    </entry>
+    <entry>
+        <key>app_version</key>
+        <value>1.0.18</value>
+    </entry>
+    <entry>
+        <key>search_num_results</key>
+        <value>3</value>
+    </entry>
+    <entry>
+        <key>enable_search</key>
+        <value>true</value>
+    </entry>
+    <!-- Add more parameters here -->
+</defaultsMap>

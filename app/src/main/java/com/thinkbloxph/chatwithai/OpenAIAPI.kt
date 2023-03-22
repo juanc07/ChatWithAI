@@ -32,20 +32,6 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
             .create(OpenAIAPIService::class.java)
     }
 
-    /*
-           addProperty("temperature", 0.5)
-           addProperty("max_tokens", 60)
-           addProperty("top_p", 1.0)
-           addProperty("frequency_penalty", 0.0)
-           addProperty("presence_penalty", 0.0)*/
-    /*add("messages", JsonArray().apply {
-        add(JsonObject().apply {
-            addProperty("role", "user")
-            addProperty("role", "system")
-            addProperty("content", message)
-        })
-    })*/
-
     suspend fun getCompletion(message:String,prompt:String,prevMessage:String?): List<String> {
         Log.d(TAG, "[INNER_TAG}]: prompt: ${prompt}")
         val json = JsonObject().apply {
@@ -73,7 +59,6 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
 
         return withContext(Dispatchers.IO) {
             try {
-                //val call = openAIAPIService.getCompletion(json)
                 val call = openAIAPIService.getCompletion(json)
                 val response = call.execute()
 

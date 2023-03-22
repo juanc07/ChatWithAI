@@ -13,8 +13,8 @@ android {
         applicationId "com.thinkbloxph.chatwithai"
         minSdk 26
         targetSdk 33
-        versionCode 18
-        versionName "1.0.17"
+        versionCode 19
+        versionName "1.0.18"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -91,4 +91,7 @@ dependencies {
     implementation 'com.android.billingclient:billing:4.0.0'
 
     implementation 'joda-time:joda-time:2.10.10'
+
+    // Firebase Remote Config
+    implementation 'com.google.firebase:firebase-config-ktx:20.0.0'
 }

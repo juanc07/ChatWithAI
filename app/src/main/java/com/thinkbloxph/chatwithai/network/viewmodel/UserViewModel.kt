@@ -35,6 +35,12 @@ class UserViewModel : ViewModel() {
     private val _createdDate = MutableLiveData<Long>()
     val createdDate: LiveData<Long> = _createdDate
 
+    private val _searchNumResults = MutableLiveData<Long>()
+    val searchNumResults: LiveData<Long> = _searchNumResults
+
+    private val _enableSearch = MutableLiveData<Boolean>()
+    val enableSearch: LiveData<Boolean> = _enableSearch
+
     fun setFirebaseUserId(firebaseUserId: String) {
         _firebaseUserId.value = firebaseUserId
     }
@@ -115,11 +121,29 @@ class UserViewModel : ViewModel() {
         return _createdDate.value
     }
 
+    fun setSearchNumResults(value: Long) {
+        _searchNumResults.value = value
+    }
+
+    fun getSearchNumResults(): Long? {
+        return _searchNumResults.value
+    }
+
+    fun setEnableSearch(value: Boolean) {
+        _enableSearch.value = value
+    }
+
+    fun getEnableSearch(): Boolean? {
+        return _enableSearch.value
+    }
+
     fun reset() {
         _phoneNumber.value = ""
         _facebookUserId.value = ""
         _googleUserId.value = ""
         _firebaseUserId.value = ""
         _email.value = ""
+        _enableSearch.value = true
+        _searchNumResults.value = 3
     }
 }

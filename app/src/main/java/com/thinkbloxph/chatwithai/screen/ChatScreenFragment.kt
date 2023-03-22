@@ -1,15 +1,19 @@
 package com.thinkbloxph.chatwithai.screen
 
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.TextUtils
 import android.util.Log
 import android.view.*
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.AppCompatSpinner
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.facebook.login.LoginManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -22,9 +26,7 @@ import com.google.firebase.ktx.Firebase
 import com.thinkbloxph.chatwithai.*
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentChatScreenBinding
-import com.thinkbloxph.chatwithai.helper.MessageCollector
-import com.thinkbloxph.chatwithai.helper.ReminderManager
-import com.thinkbloxph.chatwithai.helper.UIHelper
+import com.thinkbloxph.chatwithai.helper.*
 import com.thinkbloxph.chatwithai.network.UserDatabase
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +49,7 @@ class ChatScreenFragment: Fragment() {
 
     private lateinit var reminderManager:ReminderManager
     private var currentPrompt:String = ""
+    private lateinit var callback: OnBackPressedCallback
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -69,7 +72,6 @@ class ChatScreenFragment: Fragment() {
             }
         }
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,22 +132,39 @@ class ChatScreenFragment: Fragment() {
                             lifecycleScope.launch(Dispatchers.IO) {
                                 try {
                                     var messages: List<String>? = null
+                                    if(GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getEnableSearch() == true){
+                                        val searchResults = searchGoogle(messageText,
+                                            _userViewModel.getSearchNumResults()!!
+                                        )
+                                        Log.d(
+                                            TAG,
+                                            "[${INNER_TAG}]: searchResults $searchResults"
+                                        )
 
-                                    if(currentPrompt == getString(R.string.chatty)){
-                                        if(!MessageCollector.getPreviousMessages().isNullOrEmpty()){
-                                            if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
-                                                messages = openAI.getCompletion(messageText,currentPrompt,MessageCollector.getPreviousMessages())
+                                        val clickableResults = mutableListOf<SpannableString>()
+                                        for (result in searchResults) {
+                                            val clickableResult = GoogleSearchAPI.getInstance().makeClickableUrls(result)
+                                            clickableResults.add(clickableResult)
+                                        }
+
+                                        messages = listOf(TextUtils.join("\n\n", clickableResults))
+                                    }else{
+                                        if(currentPrompt == getString(R.string.chatty)){
+                                            if(!MessageCollector.getPreviousMessages().isNullOrEmpty()){
+                                                if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
+                                                    messages = openAI.getCompletion(messageText,currentPrompt,MessageCollector.getPreviousMessages())
+                                                }else{
+                                                    var prevMessage = openAI.summarizeText(MessageCollector.getPreviousMessages()).toString()
+                                                    messages = openAI.getCompletion(messageText,currentPrompt,prevMessage)
+                                                }
                                             }else{
-                                                var prevMessage = openAI.summarizeText(MessageCollector.getPreviousMessages()).toString()
-                                                messages = openAI.getCompletion(messageText,currentPrompt,prevMessage)
+                                                messages = openAI.getCompletion(messageText,currentPrompt,null)
                                             }
+                                        }else if(currentPrompt == getString(R.string.summarize)){
+                                            messages= openAI.summarizeText(messageText)
                                         }else{
                                             messages = openAI.getCompletion(messageText,currentPrompt,null)
                                         }
-                                    }else if(currentPrompt == getString(R.string.summarize)){
-                                        messages= openAI.summarizeText(messageText)
-                                    }else{
-                                        messages = openAI.getCompletion(messageText,currentPrompt,null)
                                     }
 
                                     // Update UI with messages
@@ -341,6 +360,12 @@ class ChatScreenFragment: Fragment() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            android.R.id.home -> {
+                Log.v(TAG, "[${INNER_TAG}]: click back button")
+                clearInput()
+                requireActivity().onBackPressed() // Call onBackPressed() to handle the back button press in the fragment
+                true
+            }
             R.id.action_button -> {
                 // Handle button click here
                 Log.v(TAG, "[${INNER_TAG}]: click clear action bar button")
@@ -405,6 +430,17 @@ class ChatScreenFragment: Fragment() {
             userViewModel = _userViewModel
             chatScreenFragment = this@ChatScreenFragment
         }
+
+        callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Handle the back button event here
+                // For example, you can show a dialog or navigate to a different screen
+                Log.v(TAG, "[${INNER_TAG}]: handleOnBackPressed event!!")
+                clearInput()
+                findNavController().navigate(R.id.action_chatScreenFragment_to_welcomeScreenFragment)
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
     override fun onStart() {
@@ -414,7 +450,6 @@ class ChatScreenFragment: Fragment() {
         UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
-        clearInput()
     }
 
     private fun clearInput(){
@@ -445,6 +480,12 @@ class ChatScreenFragment: Fragment() {
             }
         }
         firebaseAuth.signOut()
+    }
+
+    suspend fun searchGoogle(query: String, numResults: Long): List<Triple<String, String,String>> {
+        val apiKey = "AIzaSyDT6mWJkyV7iPTJOGzsRQKJKm51tiCmUKo"
+        val cx = "8768694f0cdc64d08"
+        return GoogleSearchAPI.getInstance().searchGoogle(query, apiKey, cx,numResults)
     }
 
     fun checkIfReminder(input:String):Pair<Boolean, String?>{

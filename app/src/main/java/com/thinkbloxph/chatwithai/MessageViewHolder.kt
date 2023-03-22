@@ -2,6 +2,7 @@ package com.thinkbloxph.chatwithai
 
 import android.content.Intent
 import android.os.Handler
+import android.text.method.LinkMovementMethod
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -25,6 +26,7 @@ class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         }
 
         val messageTextView: TextView = itemView.findViewById(R.id.message_text_view)
+
         val nameTextView: TextView = itemView.findViewById(R.id.name_text_view)
 
         if(!message.simulateTyping || message.sender=="me"){
@@ -45,6 +47,9 @@ class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             }
             itemView.context.startActivity(Intent.createChooser(intent, "Share message via..."))
         }
+
+        // Make links clickable
+        messageTextView.movementMethod = LinkMovementMethod.getInstance()
     }
 
     private fun simulateTypingAnimation(messageTextView: TextView, message: String) {

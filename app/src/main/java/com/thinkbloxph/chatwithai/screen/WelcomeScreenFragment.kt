@@ -25,6 +25,7 @@ import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentWelcomeScreenBinding
 import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
+import com.thinkbloxph.chatwithai.helper.RemoteConfigManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
 
@@ -101,6 +102,7 @@ class WelcomeScreenFragment: Fragment() {
             }
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+        fetchRemoteConfig()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -124,6 +126,36 @@ class WelcomeScreenFragment: Fragment() {
         UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
+    }
+
+    private fun fetchRemoteConfig(){
+        // Load the latest values from the server
+        RemoteConfigManager.load { isSuccessful->
+            if(isSuccessful){
+                // Retrieve the value of a parameter
+                val welcomeMessage = RemoteConfigManager.getString("welcome_message")
+                // Use the retrieved value as needed
+                Log.d(TAG, "Welcome message: $welcomeMessage")
+
+                // Fetch the value of the "app_version" parameter
+                val appVersion = RemoteConfigManager.getString("app_version")
+                Log.d(TAG, "appVersion: $appVersion")
+
+                // Fetch the value of the "search_num_results" parameter
+                _userViewModel.setSearchNumResults(RemoteConfigManager.getLong("search_num_results"))
+                Log.d(TAG, "searchNumResults: ${_userViewModel.getSearchNumResults()}")
+
+                _userViewModel.setEnableSearch(RemoteConfigManager.getBoolean("enable_search"))
+                Log.d(TAG, "enableSearch: ${_userViewModel.getEnableSearch()}")
+            }else{
+                // default
+                _userViewModel.setSearchNumResults(3)
+                Log.d(TAG, "searchNumResults: ${_userViewModel.getSearchNumResults()}")
+
+                _userViewModel.setEnableSearch(true)
+                Log.d(TAG, "enableSearch: ${_userViewModel.getEnableSearch()}")
+            }
+        }
     }
 
     fun showHideUnlimited(isSubscribed:Boolean){
