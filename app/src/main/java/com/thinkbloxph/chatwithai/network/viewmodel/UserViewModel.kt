@@ -44,6 +44,15 @@ class UserViewModel : ViewModel() {
     private val _creditUsage = MutableLiveData<Long>()
     val creditUsage: LiveData<Long> = _creditUsage
 
+    private val _encryptedSearchApiKey = MutableLiveData<String>()
+    val encryptedSearchApiKey: LiveData<String> = _encryptedSearchApiKey
+
+    private val _searchApiSecretKey = MutableLiveData<String>()
+    val searchApiSecretKey: LiveData<String> = _searchApiSecretKey
+
+    private val _searchEngineId = MutableLiveData<String>()
+    val searchEngineId: LiveData<String> = _searchEngineId
+
     fun setFirebaseUserId(firebaseUserId: String) {
         _firebaseUserId.value = firebaseUserId
     }
@@ -146,6 +155,30 @@ class UserViewModel : ViewModel() {
 
     fun getCreditUsage(): Long? {
         return _creditUsage.value
+    }
+
+    fun setEncryptedSearchApiKey(value: String) {
+        _encryptedSearchApiKey.value = value
+    }
+
+    fun getEncryptedSearchApiKey(): String {
+        return _encryptedSearchApiKey.value.toString()
+    }
+
+    fun setSearchApiSecretKey(value: String) {
+        _searchApiSecretKey.value = value
+    }
+
+    fun getSearchApiSecretKey(): String {
+        return _searchApiSecretKey.value.toString()
+    }
+
+    fun setSearchEngineId(value: String) {
+        _searchEngineId.value = value
+    }
+
+    fun getSearchEngineId(): String {
+        return _searchEngineId.value.toString()
     }
 
     fun reset() {

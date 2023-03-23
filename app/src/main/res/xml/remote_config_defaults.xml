@@ -20,5 +20,17 @@
         <key>credit_usage</key>
         <value>1</value>
     </entry>
+    <entry>
+        <key>searchApiSecretKey</key>
+        <value></value>
+    </entry>
+    <entry>
+        <key>encryptedSearchApiKey</key>
+        <value></value>
+    </entry>
+    <entry>
+        <key>searchEngineId</key>
+        <value></value>
+    </entry>
     <!-- Add more parameters here -->
 </defaultsMap>

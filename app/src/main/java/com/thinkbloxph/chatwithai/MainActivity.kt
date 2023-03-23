@@ -16,6 +16,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.thinkbloxph.chatwithai.databinding.ActivityMainBinding
+import com.thinkbloxph.chatwithai.helper.CryptoUtils
 
 const val TAG = "chatwitai"
 class MainActivity : AppCompatActivity() {
@@ -67,7 +68,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         Log.w(TAG, "MainActivity loaded")
-
         //createKeyHash(this, "com.thinkbloxph.chatwithai")
     }
 

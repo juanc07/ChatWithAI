@@ -134,9 +134,7 @@ class ChatScreenFragment: Fragment() {
                                 try {
                                     var messages: List<String>? = null
                                     if(GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getEnableSearch() == true){
-                                        val searchResults = searchGoogle(messageText,
-                                            _userViewModel.getSearchNumResults()!!
-                                        )
+                                        val searchResults = searchGoogle(messageText)
                                         Log.d(
                                             TAG,
                                             "[${INNER_TAG}]: searchResults $searchResults"
@@ -484,10 +482,9 @@ class ChatScreenFragment: Fragment() {
         firebaseAuth.signOut()
     }
 
-    suspend fun searchGoogle(query: String, numResults: Long): List<Triple<String, String,String>> {
-        val apiKey = "AIzaSyDT6mWJkyV7iPTJOGzsRQKJKm51tiCmUKo"
-        val cx = "8768694f0cdc64d08"
-        return GoogleSearchAPI.getInstance().searchGoogle(query, apiKey, cx,numResults)
+    private suspend fun searchGoogle(query: String): List<Triple<String, String,String>> {
+        val decryptedApiKey = CryptoUtils.decrypt(_userViewModel.getEncryptedSearchApiKey(), _userViewModel.getSearchApiSecretKey())
+        return GoogleSearchAPI.getInstance().searchGoogle(query, decryptedApiKey, _userViewModel.getSearchEngineId(),_userViewModel.getSearchNumResults()!!)
     }
 
     fun checkIfReminder(input:String):Pair<Boolean, String?>{

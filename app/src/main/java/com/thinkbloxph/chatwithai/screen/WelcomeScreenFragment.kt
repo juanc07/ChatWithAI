@@ -148,6 +148,15 @@ class WelcomeScreenFragment: Fragment() {
 
                 _userViewModel.setCreditUsage(RemoteConfigManager.getLong("credit_usage"))
                 Log.d(TAG, "creditUsage: ${_userViewModel.getCreditUsage()}")
+
+                _userViewModel.setEncryptedSearchApiKey(RemoteConfigManager.getString("encryptedSearchApiKey"))
+                Log.d(TAG, "encryptedSearchApiKey: ${_userViewModel.getEncryptedSearchApiKey()}")
+
+                _userViewModel.setSearchApiSecretKey(RemoteConfigManager.getString("searchApiSecretKey"))
+                Log.d(TAG, "searchApiSecretKey: ${_userViewModel.getSearchApiSecretKey()}")
+
+                _userViewModel.setSearchEngineId(RemoteConfigManager.getString("searchEngineId"))
+                Log.d(TAG, "searchEngineId: ${_userViewModel.getSearchEngineId()}")
             }else{
                 // default
                 _userViewModel.setSearchNumResults(3)
