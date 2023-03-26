@@ -240,7 +240,16 @@ class LoginScreenFragment: Fragment() {
                 Log.d(TAG, "[${INNER_TAG}]: loadUserData success!")
 
                 UIHelper.getInstance().hideLoading()
-                findNavController().navigate(R.id.action_loginScreenFragment_to_welcomeScreenFragment)
+                try {
+
+                    findNavController().navigate(R.id.action_loginScreenFragment_to_welcomeScreenFragment)
+                } catch (e: IllegalArgumentException) {
+                    Log.e(TAG, "Navigation error: ${e.message}")
+                    // Handle the error gracefully
+                    UIHelper.getInstance().showDialogMessage(
+                        getString(R.string.something_went_wrong), getString(R.string.dialog_ok)
+                    )
+                }
             } else {
                 // No data exists for the given UID
                 UIHelper.getInstance().hideLoading()

@@ -16,11 +16,19 @@
         <!-- ActionBar color -->
         <item name="android:textColorPrimary">@color/white</item>
         <!-- Button colors -->
-        <item name="colorControlNormal">@color/purple_200</item>
+        <!--<item name="colorControlNormal">@color/purple_200</item>-->
+        <item name="colorControlNormal">@color/white</item> <!-- Change the color here -->
     </style>
 
     <style name="Theme.ChatWithAI.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+    </style>
+
+    <!-- ActionBar Style -->
+    <style name="AppTheme.ActionBarStyle" parent="Widget.MaterialComponents.ActionBar.Primary">
+        <item name="titleTextColor">@color/white</item>
+        <item name="android:background">@color/purple_700</item>
+        <item name="colorControlNormal">@color/back_button_color</item>
     </style>
 </resources>
