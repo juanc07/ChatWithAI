@@ -20,11 +20,13 @@
     </fragment>
     <fragment
         android:id="@+id/chatScreenFragment"
-        android:name="com.thinkbloxph.chatwithai.screen.ChatScreenFragment"
-        android:label="@string/app_name_inner" >
+        android:name="com.thinkbloxph.chatwithai.screen.ChatScreenFragment">
         <action
             android:id="@+id/action_chatScreenFragment_to_welcomeScreenFragment"
             app:destination="@id/welcomeScreenFragment" />
+        <action
+            android:id="@+id/action_chatScreenFragment_to_modeScreenFragment"
+            app:destination="@id/modeScreenFragment" />
     </fragment>
     <fragment
         android:id="@+id/welcomeScreenFragment"
@@ -50,9 +52,12 @@
     <fragment
         android:id="@+id/modeScreenFragment"
         android:name="com.thinkbloxph.chatwithai.screen.ModeScreenFragment"
-        android:label="ModeScreenFragment" >
+        android:label="@string/app_name_inner">
         <action
             android:id="@+id/action_modeScreenFragment_to_chatScreenFragment"
             app:destination="@id/chatScreenFragment" />
+        <action
+            android:id="@+id/action_modeScreenFragment_to_welcomeScreenFragment"
+            app:destination="@id/welcomeScreenFragment" />
     </fragment>
 </navigation>

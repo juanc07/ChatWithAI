@@ -2,7 +2,10 @@ package com.thinkbloxph.chatwithai.helper
 
 import android.app.Activity
 import android.content.Context
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.method.LinkMovementMethod
+import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -116,6 +119,14 @@ class UIHelper(val _activity: Activity, val _fragment: Fragment) {
             _activity.supportActionBar?.setDisplayShowHomeEnabled(false)
             binding.toolbar.navigationIcon = null
         }
+    }
+
+    fun setActionBarTitle(title:String) {
+        val spannableString = SpannableString(title)
+        spannableString.setSpan(RelativeSizeSpan(0.8f), 0, title.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+        (_activity as AppCompatActivity).supportActionBar?.title = spannableString
+        //(_activity as AppCompatActivity).supportActionBar?.show()
+        //_activity.supportActionBar?.title = title
     }
 
     fun showHideActionBar(isShow: Boolean,binding:ActivityMainBinding) {

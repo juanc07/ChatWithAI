@@ -53,6 +53,9 @@ class UserViewModel : ViewModel() {
     private val _searchEngineId = MutableLiveData<String>()
     val searchEngineId: LiveData<String> = _searchEngineId
 
+    private val _currentPrompt = MutableLiveData<String>()
+    val currentPrompt: LiveData<String> = _currentPrompt
+
     fun setFirebaseUserId(firebaseUserId: String) {
         _firebaseUserId.value = firebaseUserId
     }
@@ -179,6 +182,14 @@ class UserViewModel : ViewModel() {
 
     fun getSearchEngineId(): String {
         return _searchEngineId.value.toString()
+    }
+
+    fun setCurrentPrompt(value: String) {
+        _currentPrompt.value = value
+    }
+
+    fun getCurrentPrompt(): String {
+        return _currentPrompt.value.toString()
     }
 
     fun reset() {

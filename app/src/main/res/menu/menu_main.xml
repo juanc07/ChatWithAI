@@ -3,11 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.forage.MainActivity">
 
-    <item
+   <!-- <item
         android:id="@+id/action_spinner"
         android:title="@string/choices_prompt"
         app:showAsAction="always"
-        app:actionViewClass="androidx.appcompat.widget.AppCompatSpinner" />
+        app:actionViewClass="androidx.appcompat.widget.AppCompatSpinner" />-->
 
     <item android:id="@+id/action_button"
         android:title="Clear Message"

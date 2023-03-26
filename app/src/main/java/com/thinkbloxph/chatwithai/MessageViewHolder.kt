@@ -19,10 +19,16 @@ class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     fun bind(message: ChatMessage) {
 
         // Show/hide the share button depending on the message sender
-        if (message.sender == "me") {
+        /*if (message.sender == "me") {
             shareButton?.visibility = View.GONE // Hide the share button for user messages
         } else {
             shareButton?.visibility = View.VISIBLE // Show the share button for AI messages
+        }*/
+
+        if(message.isShowShare){
+            shareButton?.visibility = View.VISIBLE // Show the share button for AI messages
+        }else{
+            shareButton?.visibility = View.GONE // Hide the share button for user messages
         }
 
         val messageTextView: TextView = itemView.findViewById(R.id.message_text_view)

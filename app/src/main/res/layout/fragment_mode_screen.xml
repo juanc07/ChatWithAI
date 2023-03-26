@@ -24,10 +24,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="64dp"
             android:fontFamily="sans-serif-black"
-            android:text="Choose Mode"
+            android:text="What do you want to do?"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
             android:textColor="#6D2AE4"
-            android:textSize="30sp"
+            android:textSize="25sp"
 
             android:typeface="normal"
             app:layout_constraintBottom_toTopOf="@+id/gridLayout"
@@ -40,9 +40,9 @@
             android:id="@+id/gridLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="100dp"
+            android:layout_margin="50dp"
             android:columnCount="2"
-            android:rowCount="4"
+            android:rowCount="5"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -50,59 +50,83 @@
 
             <Button
                 android:id="@+id/buyBtn1"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/email_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/email" />
+
+            <Button
+                android:id="@+id/buyBtn2"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/report_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/report" />
+
+            <Button
+                android:id="@+id/buyBtn3"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/twitter_post_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/twitter_post" />
+
+            <Button
+                android:id="@+id/buyBtn4"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/facebook_post_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/facebook_post" />
+
+            <Button
+                android:id="@+id/buyBtn5"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/article_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/article" />
+
+            <Button
+                android:id="@+id/buyBtn6"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/contract_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/contract"/>
+
+            <Button
+                android:id="@+id/buyBtn7"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/summarize_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/summarize" />
+
+            <Button
+                android:id="@+id/buyBtn8"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/general_assistant_mode)}"
+                android:layout_width="160dp"
+                android:layout_height="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/general_assistant" />
+
+            <Button
+                android:id="@+id/buyBtn9"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/translator_mode)}"
                 android:layout_width="160dp"
                 android:layout_height="80dp"
                 android:layout_margin="10dp"
                 android:text="@string/translate" />
 
             <Button
-                android:id="@+id/buyBtn2"
-                android:layout_width="160dp"
-                android:layout_height="80dp"
-                android:layout_margin="10dp"
-                android:text="@string/todolist" />
-
-            <Button
-                android:id="@+id/buyBtn3"
-                android:layout_width="160dp"
-                android:layout_height="80dp"
-                android:layout_margin="10dp"
-                android:text="@string/create_essay" />
-
-            <Button
-                android:id="@+id/buyBtn4"
+                android:id="@+id/buyBtn10"
+                android:onClick="@{() -> modeScreenFragment.selectPromptMode(@string/spelling_mode)}"
                 android:layout_width="160dp"
                 android:layout_height="80dp"
                 android:layout_margin="10dp"
                 android:text="@string/spelling" />
-
-            <Button
-                android:id="@+id/buyBtn5"
-                android:layout_width="160dp"
-                android:layout_height="80dp"
-                android:layout_margin="10dp"
-                android:text="@string/search" />
-
-            <Button
-                android:id="@+id/buyBtn6"
-                android:layout_width="160dp"
-                android:layout_height="80dp"
-                android:layout_margin="10dp"
-                android:text="@string/summarize_text"/>
-
-            <Button
-                android:id="@+id/buyBtn7"
-                android:layout_width="160dp"
-                android:layout_height="80dp"
-                android:layout_margin="10dp"
-                android:text="@string/create_email" />
-
-            <Button
-                android:id="@+id/buyBtn8"
-                android:layout_width="160dp"
-                android:layout_height="80dp"
-                android:layout_margin="10dp"
-                android:text="@string/assistant" />
 
         </GridLayout>
 

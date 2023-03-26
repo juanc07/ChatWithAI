@@ -49,29 +49,31 @@ class ChatScreenFragment: Fragment() {
     private var simulateTyping: Boolean = false
 
     private lateinit var reminderManager:ReminderManager
-    private var currentPrompt:String = ""
+    //private var currentPrompt:String = ""
     private lateinit var callback: OnBackPressedCallback
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
-        val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
+       /* val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
         val spinnerState = Bundle().apply {
-            putInt("selected_item_position", spinnerItem.selectedItemPosition)
+            if(spinnerItem?.selectedItemPosition!=null){
+                putInt("selected_item_position", spinnerItem.selectedItemPosition)
+            }
         }
-        outState.putBundle("spinner_state", spinnerState)
+        outState.putBundle("spinner_state", spinnerState)*/
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        if (savedInstanceState != null) {
+        /*if (savedInstanceState != null) {
             val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
             val spinnerState = savedInstanceState.getBundle("spinner_state")
             if (spinnerState != null) {
                 spinnerItem.setSelection(spinnerState.getInt("selected_item_position"))
             }
-        }
+        }*/
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -121,7 +123,7 @@ class ChatScreenFragment: Fragment() {
                     val messageText = messageInputField.text.toString()
                     if (!messageText.isNullOrEmpty() && !messageText.isBlank()) {
                         sendButton.isEnabled = false
-                        val message = ChatMessage(messageText, "me",false)
+                        val message = ChatMessage(messageText, "me",false,false)
                         messageListAdapter.addMessage(message)
                         messageInputField.text?.clear()
                         UIHelper.getInstance().showLoading()
@@ -133,7 +135,19 @@ class ChatScreenFragment: Fragment() {
                             lifecycleScope.launch(Dispatchers.IO) {
                                 try {
                                     var messages: List<String>? = null
-                                    if(GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getEnableSearch() == true){
+
+                                    if(!MessageCollector.getPreviousMessages().isNullOrEmpty()){
+                                        if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
+                                            messages = openAI.getCompletion(messageText,_userViewModel.getCurrentPrompt(),MessageCollector.getPreviousMessages())
+                                        }else{
+                                            var prevMessage = openAI.summarizeText(MessageCollector.getPreviousMessages()).toString()
+                                            messages = openAI.getCompletion(messageText,_userViewModel.getCurrentPrompt(),prevMessage)
+                                        }
+                                    }else{
+                                        messages = openAI.getCompletion(messageText,_userViewModel.getCurrentPrompt(),null)
+                                    }
+
+                                    /*if(GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getEnableSearch() == true){
                                         val searchResults = searchGoogle(messageText)
                                         Log.d(
                                             TAG,
@@ -148,6 +162,7 @@ class ChatScreenFragment: Fragment() {
 
                                         messages = listOf(TextUtils.join("\n\n", clickableResults))
                                     }else{
+
                                         if(currentPrompt == getString(R.string.chatty)){
                                             if(!MessageCollector.getPreviousMessages().isNullOrEmpty()){
                                                 if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
@@ -164,7 +179,7 @@ class ChatScreenFragment: Fragment() {
                                         }else{
                                             messages = openAI.getCompletion(messageText,currentPrompt,null)
                                         }
-                                    }
+                                    }*/
 
                                     // Update UI with messages
                                     withContext(Dispatchers.Main) {
@@ -179,7 +194,7 @@ class ChatScreenFragment: Fragment() {
 
                                             UIHelper.getInstance().hideLoading()
                                             val aiResponse =
-                                                firstMessage?.let { it1 -> ChatMessage(it1, "AI", simulateTyping) }
+                                                firstMessage?.let { it1 -> ChatMessage(it1, "AI", simulateTyping,true) }
                                             if (aiResponse != null) {
                                                 messageListAdapter.addMessage(aiResponse)
                                             }
@@ -285,13 +300,11 @@ class ChatScreenFragment: Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
-
-        currentPrompt = getString(R.string.chatty)
+        /*currentPrompt = getString(R.string.chatty)
 
         val spinnerItem = menu.findItem(R.id.action_spinner)
         val spinner = spinnerItem.actionView as AppCompatSpinner
         val choices = resources.getStringArray(R.array.choices_array)
-        //val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, choices)
         val adapter = ArrayAdapter(requireContext(), R.layout.spinner_item_layout, choices)
         spinner.adapter = adapter
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -353,7 +366,7 @@ class ChatScreenFragment: Fragment() {
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 // do nothing
             }
-        }
+        }*/
 
         super.onCreateOptionsMenu(menu, inflater)
     }
@@ -437,7 +450,7 @@ class ChatScreenFragment: Fragment() {
                 // For example, you can show a dialog or navigate to a different screen
                 Log.v(TAG, "[${INNER_TAG}]: handleOnBackPressed event!!")
                 clearInput()
-                findNavController().navigate(R.id.action_chatScreenFragment_to_welcomeScreenFragment)
+                findNavController().navigate(R.id.action_chatScreenFragment_to_modeScreenFragment)
             }
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
@@ -450,6 +463,62 @@ class ChatScreenFragment: Fragment() {
         UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
+
+        var actionTitle:String = ""
+        when(_userViewModel.getCurrentPrompt()){
+            getString(R.string.email_mode)->{
+                actionTitle = "Create an Email"
+                val message = ChatMessage("Please give me the necessary details about the email, and I'll assist you in creating it.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.report_mode)->{
+                actionTitle = "Create a Report"
+                val message = ChatMessage("Please provide me with the necessary details about the report, and I'll assist you in creating it.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.twitter_post_mode)->{
+                actionTitle = "Create a Twitter Post"
+                val message = ChatMessage("Please share the details with me, and I'll assist you in creating your Tweet post.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.facebook_post_mode)->{
+                actionTitle = "Create a Facebook Post"
+                val message = ChatMessage("Please provide me with the necessary information so that I can assist you in creating your Facebook post.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.article_mode)->{
+                actionTitle = "Create an Article"
+                val message = ChatMessage("Please give me the topic and specifics of your article, and I'll assist you in crafting it.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.contract_mode)->{
+                actionTitle = "Create simple contract"
+                val message = ChatMessage("Please provide me with the essential information regarding your contract, so that I can create it for you.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.summarize_mode)->{
+                actionTitle = "Paste it and i will summarize it"
+                val message = ChatMessage("Please provide the information you would like me to simplify and summarize.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.general_assistant_mode)->{
+                actionTitle = "Ask anything you want?"
+                val message = ChatMessage("Don't be shy! We'd love to hear from you and answer any questions you have.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.translator_mode)->{
+                actionTitle = "Type it and I will translate it"
+                val message = ChatMessage("I can help you improve and clarify any text you provide, and translate it into several languages including Spanish, French, German, and more. Just let me know the text and the language you want me to translate it into.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+            getString(R.string.spelling_mode)->{
+                actionTitle = "Type and i will correct it"
+                val message = ChatMessage("I can help you improve and clarify any text you provide. Please type the text you would like me to review or edit.", "AI",false,false)
+                messageListAdapter.addMessage(message)
+            }
+        }
+
+        UIHelper.getInstance().setActionBarTitle(actionTitle)
     }
 
     private fun clearInput(){

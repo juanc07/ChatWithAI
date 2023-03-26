@@ -78,7 +78,7 @@
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_marginBottom="8dp"
-            android:onClick="@{() -> welcomeScreenFragment.goToLogin()}"
+            android:onClick="@{() -> welcomeScreenFragment.goToModeSelection()}"
             android:text="@string/start_chat"
             app:layout_constraintBottom_toTopOf="@+id/buyCreditBtn"
             app:layout_constraintEnd_toEndOf="parent"
