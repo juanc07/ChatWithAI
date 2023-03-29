@@ -1,15 +1,11 @@
 package com.thinkbloxph.chatwithai.screen
 
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.TextUtils
 import android.util.Log
 import android.view.*
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Button
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.widget.AppCompatSpinner
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -33,9 +29,11 @@ import com.thinkbloxph.chatwithai.network.viewmodel.UserViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 private const val INNER_TAG = "ChatScreenFragment"
-class ChatScreenFragment: Fragment() {
+
+class ChatScreenFragment : Fragment(),TextToSpeechListener {
     private var _binding: FragmentChatScreenBinding? = null
     private val binding get() = _binding!!
     private val _userViewModel: UserViewModel by activityViewModels()
@@ -44,24 +42,31 @@ class ChatScreenFragment: Fragment() {
 
     private lateinit var messageListAdapter: MessageListAdapter
     private lateinit var sendButton: Button
+    private lateinit var recordButton: Button
     private lateinit var messageInputField: TextInputEditText
     private val userDb = UserDatabase()
     private var simulateTyping: Boolean = false
 
-    private lateinit var reminderManager:ReminderManager
+    private var isEnableSpeaking: Boolean = false
+    private var isSpeaking: Boolean = false
+
+    private lateinit var reminderManager: ReminderManager
+
     //private var currentPrompt:String = ""
     private lateinit var callback: OnBackPressedCallback
+    private var isRecording = false
+    val permissionManager = PermissionManager.getInstance()
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
-       /* val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
-        val spinnerState = Bundle().apply {
-            if(spinnerItem?.selectedItemPosition!=null){
-                putInt("selected_item_position", spinnerItem.selectedItemPosition)
-            }
-        }
-        outState.putBundle("spinner_state", spinnerState)*/
+        /* val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
+         val spinnerState = Bundle().apply {
+             if(spinnerItem?.selectedItemPosition!=null){
+                 putInt("selected_item_position", spinnerItem.selectedItemPosition)
+             }
+         }
+         outState.putBundle("spinner_state", spinnerState)*/
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -98,16 +103,127 @@ class ChatScreenFragment: Fragment() {
         // Set other view references using binding
         messageInputField = binding.messageInputField
         sendButton = binding.sendButton
+        recordButton = binding.recordButton
+        recordButton.isEnabled = isEnableSpeaking
+
 
         reminderManager = ReminderManager.getInstance(requireContext())
 
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
 
+        TextToSpeechHelper.initialize(requireContext())
+        TextToSpeechHelper.getInstance().addListener(this)
+
         messageListAdapter.typingStatusListener = object : TypingStatusListener {
             override fun onTypingStatusChanged(isTyping: Boolean) {
                 // Notify the listener that the typing status has changed
                 sendButton.isEnabled = !isTyping
+                recordButton.isEnabled = !isTyping
+            }
+        }
+
+        val recordButton = binding.recordButton
+        val openAI = OpenAIAPI(lifecycleScope, requireContext())
+
+        recordButton.setOnClickListener {
+            if (AudioRecorder.getInstance()?.checkPermission()!!) {
+                Log.d(TAG, "[${INNER_TAG}]: permission granted!")
+                var remainingCredit = _userViewModel.getCredit()
+                var isSubscribed = _userViewModel.getIsSubscribed()
+                var recordCreditPrice = _userViewModel.getRecordCreditPrice()
+                var completionCreditPrice = _userViewModel.getCompletionCreditPrice()
+
+                if (remainingCredit != null && isSubscribed != null) {
+                    if (remainingCredit >= recordCreditPrice!! || isSubscribed) {
+                        isRecording = !isRecording // Toggle the boolean value
+
+                        recordButton.apply {
+                            if (isRecording) {
+                                setIconResource(R.drawable.baseline_stop_circle_24)
+                            } else {
+                                setIconResource(R.drawable.baseline_keyboard_voice_24)
+                                // disable record button
+                                UIHelper.getInstance().showLoading()
+                                enableDisableRecordSend(false)
+                            }
+                        }
+
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            try {
+                                var recordedMessages: List<String>? = null
+                                if (isRecording) {
+                                    AudioRecorder.getInstance()?.startRecording(requireContext())
+                                } else {
+                                    val file = File(AudioRecorder.getInstance()?.stopRecording())
+
+                                    recordedMessages =
+                                        openAI.transcribeAudio(file, _userViewModel.getGptToken())
+
+                                    withContext(Dispatchers.Main) {
+                                        //println(messages)
+                                        if (!recordedMessages.isNullOrEmpty()) {
+                                            // The messages are not empty
+                                            // Do something with the messages here
+                                            val firstMessage = recordedMessages!![0]?.trim()
+                                            if (firstMessage != null) {
+                                                MessageCollector.addMessage(firstMessage)
+                                            }
+
+                                            val recordResponse =
+                                                firstMessage?.let { actualMessage ->
+                                                    ChatMessage(
+                                                        actualMessage,
+                                                        "me",
+                                                        simulateTyping = false,
+                                                        isShowShare = false
+                                                    )
+                                                }
+
+                                            recordResponse?.let { actualResponse ->
+                                                messageListAdapter.addMessage(
+                                                    actualResponse
+                                                )
+                                            }
+                                            deductCredit(recordCreditPrice)
+                                            firstMessage?.let { actualFirstMessage ->
+                                                startCompletion(
+                                                    actualFirstMessage, completionCreditPrice!!
+                                                )
+                                            }
+                                        } else {
+                                            // The messages are empty
+                                            // Handle this case here
+                                            Log.d(
+                                                TAG,
+                                                "[${INNER_TAG}]: message reply is empty!"
+                                            )
+                                            showErrorDialog()
+                                        }
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.d(
+                                    TAG,
+                                    "[${INNER_TAG}]: e: ${e.toString()}"
+                                )
+                                // Show dialog to notify user of error
+                                withContext(Dispatchers.Main) {
+                                    showErrorDialog()
+                                }
+                            }
+                        }
+                    } else {
+                        // The messages are empty
+                        // Handle this case here
+                        UIHelper.getInstance().hideLoading()
+                        showDialog("Sorry Buddy", getString(R.string.out_of_credit_info))
+                    }
+                } else {
+                    showErrorDialog()
+                }
+            } else {
+                Log.d(TAG, "[${INNER_TAG}]: permission not granted!")
             }
         }
 
@@ -116,181 +232,35 @@ class ChatScreenFragment: Fragment() {
 
             var remainingCredit = _userViewModel.getCredit()
             var isSubscribed = _userViewModel.getIsSubscribed()
+            var completionCreditPrice = _userViewModel.getCompletionCreditPrice()
+
             Log.d(TAG, "[${INNER_TAG}]: check credit: ${remainingCredit}}!")
             if (remainingCredit != null && isSubscribed != null) {
-                if(remainingCredit > 0 || isSubscribed){
+                if (remainingCredit >= _userViewModel.getCompletionCreditPrice()!! || isSubscribed) {
                     // Send button click logic here
                     val messageText = messageInputField.text.toString()
                     if (!messageText.isNullOrEmpty() && !messageText.isBlank()) {
-                        sendButton.isEnabled = false
-                        val message = ChatMessage(messageText, "me",false,false)
+                        enableDisableRecordSend(false)
+                        val message = ChatMessage(messageText, "me", false, false)
                         messageListAdapter.addMessage(message)
                         messageInputField.text?.clear()
                         UIHelper.getInstance().showLoading()
-                        val isReminder = false
-                        //val (isReminder, reminderText) = checkIfReminder(messageText)
-
-                        if(!isReminder) {
-                            val openAI = OpenAIAPI(lifecycleScope, requireContext())
-                            lifecycleScope.launch(Dispatchers.IO) {
-                                try {
-                                    var messages: List<String>? = null
-
-                                    if(!MessageCollector.getPreviousMessages().isNullOrEmpty()){
-                                        if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
-                                            messages = openAI.getCompletion(messageText,_userViewModel.getCurrentPrompt(),MessageCollector.getPreviousMessages())
-                                        }else{
-                                            var prevMessage = openAI.summarizeText(MessageCollector.getPreviousMessages()).toString()
-                                            messages = openAI.getCompletion(messageText,_userViewModel.getCurrentPrompt(),prevMessage)
-                                        }
-                                    }else{
-                                        messages = openAI.getCompletion(messageText,_userViewModel.getCurrentPrompt(),null)
-                                    }
-
-                                    /*if(GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getEnableSearch() == true){
-                                        val searchResults = searchGoogle(messageText)
-                                        Log.d(
-                                            TAG,
-                                            "[${INNER_TAG}]: searchResults $searchResults"
-                                        )
-
-                                        val clickableResults = mutableListOf<SpannableString>()
-                                        for (result in searchResults) {
-                                            val clickableResult = GoogleSearchAPI.getInstance().makeClickableUrls(result)
-                                            clickableResults.add(clickableResult)
-                                        }
-
-                                        messages = listOf(TextUtils.join("\n\n", clickableResults))
-                                    }else{
-
-                                        if(currentPrompt == getString(R.string.chatty)){
-                                            if(!MessageCollector.getPreviousMessages().isNullOrEmpty()){
-                                                if(openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())){
-                                                    messages = openAI.getCompletion(messageText,currentPrompt,MessageCollector.getPreviousMessages())
-                                                }else{
-                                                    var prevMessage = openAI.summarizeText(MessageCollector.getPreviousMessages()).toString()
-                                                    messages = openAI.getCompletion(messageText,currentPrompt,prevMessage)
-                                                }
-                                            }else{
-                                                messages = openAI.getCompletion(messageText,currentPrompt,null)
-                                            }
-                                        }else if(currentPrompt == getString(R.string.summarize)){
-                                            messages= openAI.summarizeText(messageText)
-                                        }else{
-                                            messages = openAI.getCompletion(messageText,currentPrompt,null)
-                                        }
-                                    }*/
-
-                                    // Update UI with messages
-                                    withContext(Dispatchers.Main) {
-                                        //println(messages)
-                                        if (!messages.isNullOrEmpty()) {
-                                            // The messages are not empty
-                                            // Do something with the messages here
-                                            val firstMessage = messages[0]?.trim()
-                                            if (firstMessage != null) {
-                                                MessageCollector.addMessage(firstMessage)
-                                            }
-
-                                            UIHelper.getInstance().hideLoading()
-                                            val aiResponse =
-                                                firstMessage?.let { it1 -> ChatMessage(it1, "AI", simulateTyping,true) }
-                                            if (aiResponse != null) {
-                                                messageListAdapter.addMessage(aiResponse)
-                                            }
-                                            if (!simulateTyping)
-                                                sendButton.isEnabled = true
-
-                                            if (!isSubscribed) {
-                                                // deduct each time the ai reply when not subscribed
-                                                var creditToDeduct = (_userViewModel.getCreditUsage()!! * -1).toInt()
-                                                _userViewModel.getCredit()?.let { it1 ->
-                                                    userDb.updateCredit(
-                                                        it1,
-                                                        creditToDeduct,
-                                                        callback = { newCredit, isSuccess ->
-                                                            if (isSuccess) {
-                                                                if (newCredit != null) {
-                                                                    _userViewModel.setCredit(
-                                                                        newCredit
-                                                                    )
-                                                                }
-                                                                Log.d(
-                                                                    TAG,
-                                                                    "[${INNER_TAG}]: deduct credit success!"
-                                                                )
-                                                            } else {
-                                                                Log.d(
-                                                                    TAG,
-                                                                    "[${INNER_TAG}]: deduct credit failed!"
-                                                                )
-                                                            }
-                                                        })
-                                                }
-                                            } else {
-                                                // user is subscribed no credit will be deducted
-                                            }
-                                        } else {
-                                            // The messages are empty
-                                            // Handle this case here
-                                            UIHelper.getInstance().hideLoading()
-                                            MaterialAlertDialogBuilder(requireContext())
-                                                .setTitle("Oops!")
-                                                .setMessage("Something went wrong. Please try again later.")
-                                                .setPositiveButton("OK") { dialog, _ ->
-                                                    sendButton.isEnabled = true
-                                                    dialog.dismiss()
-                                                }
-                                                .show()
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    UIHelper.getInstance().hideLoading()
-                                    // Show dialog to notify user of error
-                                    withContext(Dispatchers.Main) {
-                                        MaterialAlertDialogBuilder(requireContext())
-                                            .setTitle("Oops!")
-                                            .setMessage("Something went wrong. Please try again later.")
-                                            .setPositiveButton("OK") { dialog, _ ->
-                                                sendButton.isEnabled = true
-                                                dialog.dismiss()
-                                            }
-                                            .show()
-                                    }
-                                }
-                            }
-                        }else{
-                            /*if(!reminderText.isNullOrEmpty()){
-                                val message = ChatMessage(reminderText, "AI",false)
-                                messageListAdapter.addMessage(message)
-                                sendButton.isEnabled = true
-                            }*/
-                        }
-                    }else if( messageText.contains(" ")){
-                        showDialog("Hey Buddy","Please enter a message!")
-                    }
-                    else {
+                        startCompletion(messageText, completionCreditPrice!!)
+                    } else if (messageText.contains(" ")) {
+                        showDialog("Hey Buddy", "Please enter a message!")
+                    } else {
                         // The messages are empty
                         // Handle this case here
-                        showDialog("Hey Buddy","Please enter a message!")
+                        showDialog("Hey Buddy", "Please enter a message!")
                     }
-                }else {
+                } else {
                     // The messages are empty
                     // Handle this case here
                     UIHelper.getInstance().hideLoading()
-                    showDialog("Sorry Buddy",getString(R.string.out_of_credit_info))
+                    showDialog("Sorry Buddy", getString(R.string.out_of_credit_info))
                 }
-            }else{
-                UIHelper.getInstance().hideLoading()
-
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Oops!")
-                    .setMessage("Something went wrong. Credit not found. Please try again later.")
-                    .setPositiveButton("OK") { dialog, _ ->
-                        sendButton.isEnabled = true
-                        dialog.dismiss()
-                    }
-                    .show()
+            } else {
+                showErrorDialog()
             }
         }
 
@@ -300,6 +270,17 @@ class ChatScreenFragment: Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
+
+        val switchMenuItem = menu.findItem(R.id.switch_toggle)
+
+        switchMenuItem.actionView?.findViewById<SwitchCompat>(R.id.switch_toggle)
+            ?.setOnCheckedChangeListener { _, isChecked ->
+                // Handle the switch toggle event here
+                Log.d(TAG, "[${INNER_TAG}]: switchMenuItem check isChecked: ${isChecked}}!")
+                isEnableSpeaking = isChecked
+                recordButton.isEnabled = isChecked
+            }
+
         /*currentPrompt = getString(R.string.chatty)
 
         val spinnerItem = menu.findItem(R.id.action_spinner)
@@ -382,7 +363,7 @@ class ChatScreenFragment: Fragment() {
             R.id.action_button -> {
                 // Handle button click here
                 Log.v(TAG, "[${INNER_TAG}]: click clear action bar button")
-                if(sendButton.isEnabled){
+                if (sendButton.isEnabled) {
                     clearInput()
                 }
                 true
@@ -395,14 +376,153 @@ class ChatScreenFragment: Fragment() {
         super.onDestroyView()
         // Call this method to hide the button
         _binding = null
+        TextToSpeechHelper.getInstance().shutdown()
     }
 
-    private fun showDialog(title:String, message:String){
+    private fun startCompletion(messageText: String,completionCreditPrice:Long) {
+        val openAI = OpenAIAPI(lifecycleScope, requireContext())
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                var messages: List<String>? = null
+
+                if (!MessageCollector.getPreviousMessages().isNullOrEmpty()) {
+                    if (openAI.isSummaryLengthValid(MessageCollector.getPreviousMessages())) {
+                        messages = openAI.getCompletion(
+                            messageText,
+                            _userViewModel.getCurrentPrompt(),
+                            MessageCollector.getPreviousMessages(),
+                            _userViewModel.getGptToken()
+                        )
+                    } else {
+                        var prevMessage = openAI.summarizeText(
+                            MessageCollector.getPreviousMessages(),
+                            _userViewModel.getGptToken()
+                        ).toString()
+                        messages = openAI.getCompletion(
+                            messageText,
+                            _userViewModel.getCurrentPrompt(),
+                            prevMessage,
+                            _userViewModel.getGptToken()
+                        )
+                    }
+                } else {
+                    messages = openAI.getCompletion(
+                        messageText,
+                        _userViewModel.getCurrentPrompt(),
+                        null,
+                        _userViewModel.getGptToken()
+                    )
+                }
+
+                // Update UI with messages
+                withContext(Dispatchers.Main) {
+                    //println(messages)
+                    if (!messages.isNullOrEmpty()) {
+                        // The messages are not empty
+                        // Do something with the messages here
+                        val firstMessage = messages[0]?.trim()
+                        // for collecting summary of chat or context of chat
+                        // to prevent ai to tell unrelated answer
+                        firstMessage?.let { MessageCollector.addMessage(it) }
+
+                        UIHelper.getInstance().hideLoading()
+                        val aiResponse =
+                            firstMessage?.let { it1 ->
+                                ChatMessage(
+                                    it1,
+                                    "AI",
+                                    simulateTyping,
+                                    true
+                                )
+                            }
+
+                        // for adding the message to actual chat , for updating the chat message view
+                        aiResponse?.let { messageListAdapter.addMessage(it) }
+                        // call deduct credit here
+                        deductCredit(completionCreditPrice)
+
+                        if(isEnableSpeaking && !isSpeaking){
+                            isSpeaking = true
+                            enableDisableRecordSend(false)
+                            firstMessage?.let { TextToSpeechHelper.getInstance().speak(it) }
+                        }else{
+                            enableDisableRecordSend(true)
+                        }
+                    } else {
+                        // The messages are empty
+                        // Handle this case here
+                        showErrorDialog()
+                    }
+                }
+            } catch (e: Exception) {
+                // Show dialog to notify user of error
+                withContext(Dispatchers.Main) {
+                    showErrorDialog()
+                }
+            }
+        }
+    }
+
+    private fun deductCredit(creditPrice:Long) {
+        var isSubscribed = _userViewModel.getIsSubscribed()
+        if (!isSubscribed!!) {
+            // deduct each time the ai reply when not subscribed
+            var creditToDeduct =
+                (creditPrice * -1).toInt()
+            _userViewModel.getCredit()?.let { it1 ->
+                userDb.updateCredit(
+                    it1,
+                    creditToDeduct,
+                    callback = { newCredit, isSuccess ->
+                        if (isSuccess) {
+                            if (newCredit != null) {
+                                _userViewModel.setCredit(
+                                    newCredit
+                                )
+                            }
+                            Log.d(
+                                TAG,
+                                "[${INNER_TAG}]: deduct credit success!"
+                            )
+                        } else {
+                            Log.d(
+                                TAG,
+                                "[${INNER_TAG}]: deduct credit failed!"
+                            )
+                        }
+                    })
+            }
+        } else {
+            // user is subscribed no credit will be deducted
+        }
+    }
+
+    private fun enableDisableRecordSend(enable: Boolean) {
+        sendButton.isEnabled = enable
+        if(isEnableSpeaking){
+            recordButton.isEnabled = enable
+        }
+    }
+
+    private fun showDialog(title: String, message: String) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("OK") { dialog, _ ->
                 sendButton.isEnabled = true
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showErrorDialog() {
+        UIHelper.getInstance().hideLoading()
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Oops!")
+            .setMessage("Something went wrong. Please try again later.")
+            .setPositiveButton("OK") { dialog, _ ->
+                enableDisableRecordSend(true)
                 dialog.dismiss()
             }
             .show()
@@ -460,60 +580,110 @@ class ChatScreenFragment: Fragment() {
         super.onStart()
         // show action bar without back button
         //UIHelper.getInstance().showHideActionBarWithoutBackButton(true,(requireActivity() as MainActivity).binding)
-        UIHelper.getInstance().showHideActionBar(true,(requireActivity() as MainActivity).binding)
+        UIHelper.getInstance().showHideActionBar(true, (requireActivity() as MainActivity).binding)
         showHideBottomNavigation(false)
         showHideSideNavigation(false)
 
-        var actionTitle:String = ""
-        when(_userViewModel.getCurrentPrompt()){
-            getString(R.string.email_mode)->{
+        var actionTitle: String = ""
+        when (_userViewModel.getCurrentPrompt()) {
+            getString(R.string.email_mode) -> {
                 actionTitle = "Create an Email"
-                val message = ChatMessage("Please give me the necessary details about the email, and I'll assist you in creating it.", "AI",false,false)
+                val message = ChatMessage(
+                    "Please give me the necessary details about the email, and I'll assist you in creating it.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.report_mode)->{
+            getString(R.string.report_mode) -> {
                 actionTitle = "Create a Report"
-                val message = ChatMessage("Please provide me with the necessary details about the report, and I'll assist you in creating it.", "AI",false,false)
+                val message = ChatMessage(
+                    "Please provide me with the necessary details about the report, and I'll assist you in creating it.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.twitter_post_mode)->{
+            getString(R.string.twitter_post_mode) -> {
                 actionTitle = "Create a Twitter Post"
-                val message = ChatMessage("Please share the details with me, and I'll assist you in creating your Tweet post.", "AI",false,false)
+                val message = ChatMessage(
+                    "Please share the details with me, and I'll assist you in creating your Tweet post.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.facebook_post_mode)->{
+            getString(R.string.facebook_post_mode) -> {
                 actionTitle = "Create a Facebook Post"
-                val message = ChatMessage("Please provide me with the necessary information so that I can assist you in creating your Facebook post.", "AI",false,false)
+                val message = ChatMessage(
+                    "Please provide me with the necessary information so that I can assist you in creating your Facebook post.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.article_mode)->{
+            getString(R.string.article_mode) -> {
                 actionTitle = "Create an Article"
-                val message = ChatMessage("Please give me the topic and specifics of your article, and I'll assist you in crafting it.", "AI",false,false)
+                val message = ChatMessage(
+                    "Please give me the topic and specifics of your article, and I'll assist you in crafting it.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.contract_mode)->{
+            getString(R.string.contract_mode) -> {
                 actionTitle = "Create simple contract"
-                val message = ChatMessage("Please provide me with the essential information regarding your contract, so that I can create it for you.", "AI",false,false)
+                val message = ChatMessage(
+                    "Please provide me with the essential information regarding your contract, so that I can create it for you.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.summarize_mode)->{
-                actionTitle = "Paste it and i will summarize it"
-                val message = ChatMessage("Please provide the information you would like me to simplify and summarize.", "AI",false,false)
+            getString(R.string.summarize_mode) -> {
+                actionTitle = "Summarize Info"
+                val message = ChatMessage(
+                    "Please provide the information you would like me to simplify and summarize.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.general_assistant_mode)->{
+            getString(R.string.general_assistant_mode) -> {
                 actionTitle = "Ask anything you want?"
-                val message = ChatMessage("Don't be shy! We'd love to hear from you and answer any questions you have.", "AI",false,false)
+                val message = ChatMessage(
+                    "Don't be shy! We'd love to hear from you and answer any questions you have.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.translator_mode)->{
-                actionTitle = "Type it and I will translate it"
-                val message = ChatMessage("I can help you improve and clarify any text you provide, and translate it into several languages including Spanish, French, German, and more. Just let me know the text and the language you want me to translate it into.", "AI",false,false)
+            getString(R.string.translator_mode) -> {
+                actionTitle = "Translate Text"
+                val message = ChatMessage(
+                    "I can help you improve and clarify any text you provide, and translate it into several languages including Spanish, French, German, and more. Just let me know the text and the language you want me to translate it into.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
-            getString(R.string.spelling_mode)->{
-                actionTitle = "Type and i will correct it"
-                val message = ChatMessage("I can help you improve and clarify any text you provide. Please type the text you would like me to review or edit.", "AI",false,false)
+            getString(R.string.spelling_mode) -> {
+                actionTitle = "Correct Spelling"
+                val message = ChatMessage(
+                    "I can help you improve and clarify any text you provide. Please type the text you would like me to review or edit.",
+                    "AI",
+                    false,
+                    false
+                )
                 messageListAdapter.addMessage(message)
             }
         }
@@ -521,20 +691,21 @@ class ChatScreenFragment: Fragment() {
         UIHelper.getInstance().setActionBarTitle(actionTitle)
     }
 
-    private fun clearInput(){
+    private fun clearInput() {
         messageListAdapter.clearMessages()
         MessageCollector.clearMessages()
     }
 
-    fun signout(){
+    fun signout() {
         var currentProvider: String? = null
         if (firebaseAuth.currentUser?.providerData?.size!! > 0) {
             //Prints Out google.com for Google Sign In, prints facebook.com for Facebook
-            currentProvider =  firebaseAuth.currentUser!!.providerData.get(firebaseAuth.currentUser!!.providerData.size - 1).providerId
+            currentProvider =
+                firebaseAuth.currentUser!!.providerData.get(firebaseAuth.currentUser!!.providerData.size - 1).providerId
             Log.v(TAG, "[${INNER_TAG}]: currentProvider ${currentProvider}")
         }
 
-        when(currentProvider){
+        when (currentProvider) {
             "facebook.com" -> {
                 LoginManager.getInstance().logOut();
                 Log.v(TAG, "[${INNER_TAG}]: facebook SignOut success!")
@@ -544,19 +715,27 @@ class ChatScreenFragment: Fragment() {
                     Log.v(TAG, "[${INNER_TAG}]: google SignOut success!")
                 }
             }
-            else ->{
+            else -> {
                 Log.v(TAG, "[${INNER_TAG}]: provider not detected!")
             }
         }
         firebaseAuth.signOut()
     }
 
-    private suspend fun searchGoogle(query: String): List<Triple<String, String,String>> {
-        val decryptedApiKey = CryptoUtils.decrypt(_userViewModel.getEncryptedSearchApiKey(), _userViewModel.getSearchApiSecretKey())
-        return GoogleSearchAPI.getInstance().searchGoogle(query, decryptedApiKey, _userViewModel.getSearchEngineId(),_userViewModel.getSearchNumResults()!!)
+    private suspend fun searchGoogle(query: String): List<Triple<String, String, String>> {
+        val decryptedApiKey = CryptoUtils.decrypt(
+            _userViewModel.getEncryptedSearchApiKey(),
+            _userViewModel.getSearchApiSecretKey()
+        )
+        return GoogleSearchAPI.getInstance().searchGoogle(
+            query,
+            decryptedApiKey,
+            _userViewModel.getSearchEngineId(),
+            _userViewModel.getSearchNumResults()!!
+        )
     }
 
-    fun checkIfReminder(input:String):Pair<Boolean, String?>{
+    fun checkIfReminder(input: String): Pair<Boolean, String?> {
         // Parse the input to get the reminder time and message
         val (reminderTime, reminderText) = reminderManager.parseReminderText(input)
 
@@ -574,6 +753,15 @@ class ChatScreenFragment: Fragment() {
             println(reminderText)
             Log.d(TAG, "[${INNER_TAG}]:checkIfReminder: ${reminderText}}!")
             Pair(false, null)
+        }
+    }
+
+    override fun onSpeechDone() {
+        requireActivity().runOnUiThread {
+            if(isSpeaking){
+                enableDisableRecordSend(true)
+                isSpeaking = false
+            }
         }
     }
 }

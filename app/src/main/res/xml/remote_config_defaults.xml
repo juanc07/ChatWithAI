@@ -32,5 +32,17 @@
         <key>searchEngineId</key>
         <value></value>
     </entry>
+    <entry>
+        <key>gpt_token</key>
+        <value></value>
+    </entry>
+    <entry>
+        <key>completion_credit_price</key>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>record_credit_price</key>
+        <value>5</value>
+    </entry>
     <!-- Add more parameters here -->
 </defaultsMap>

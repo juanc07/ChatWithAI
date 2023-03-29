@@ -1,8 +1,6 @@
 package com.thinkbloxph.chatwithai.helper
 
 import android.app.Activity
-import android.content.pm.PackageManager
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 
@@ -37,8 +35,8 @@ class PermissionManager private constructor() {
         private const val REQUEST_CODE = 1
         private val PERMISSIONS = arrayOf(
             // add any permission you need to request here
-            android.Manifest.permission.READ_PHONE_STATE,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
+            android.Manifest.permission.RECORD_AUDIO,
+            android.Manifest.permission.VIBRATE
         )
 
         private var instance: PermissionManager? = null

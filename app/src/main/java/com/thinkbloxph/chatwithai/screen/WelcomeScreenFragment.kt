@@ -1,5 +1,7 @@
 package com.thinkbloxph.chatwithai.screen
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,6 +15,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -22,6 +25,7 @@ import com.thinkbloxph.chatwithai.R
 import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentWelcomeScreenBinding
+import com.thinkbloxph.chatwithai.helper.AudioRecorder
 import com.thinkbloxph.chatwithai.helper.InAppPurchaseManager
 import com.thinkbloxph.chatwithai.helper.RemoteConfigManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
@@ -138,20 +142,19 @@ class WelcomeScreenFragment: Fragment() {
                 // Fetch the value of the "app_version" parameter
                 val appVersion = RemoteConfigManager.getString("app_version")
                 Log.d(TAG, "appVersion: $appVersion")
-
                 // Fetch the value of the "search_num_results" parameter
                 _userViewModel.setSearchNumResults(RemoteConfigManager.getLong("search_num_results"))
                 Log.d(TAG, "searchNumResults: ${_userViewModel.getSearchNumResults()}")
-
                 _userViewModel.setEnableSearch(RemoteConfigManager.getBoolean("enable_search"))
                 Log.d(TAG, "enableSearch: ${_userViewModel.getEnableSearch()}")
-
                 _userViewModel.setCreditUsage(RemoteConfigManager.getLong("credit_usage"))
-                Log.d(TAG, "creditUsage: ${_userViewModel.getCreditUsage()}")
-
                 _userViewModel.setEncryptedSearchApiKey(RemoteConfigManager.getString("encryptedSearchApiKey"))
                 _userViewModel.setSearchApiSecretKey(RemoteConfigManager.getString("searchApiSecretKey"))
                 _userViewModel.setSearchEngineId(RemoteConfigManager.getString("searchEngineId"))
+                _userViewModel.setGptToken(RemoteConfigManager.getString("gpt_token"))
+                _userViewModel.setCompletionCreditPrice(RemoteConfigManager.getLong("completion_credit_price"))
+                _userViewModel.setRecordCreditPrice(RemoteConfigManager.getLong("record_credit_price"))
+                checkAppVersion(appVersion)
             }else{
                 // default
                 _userViewModel.setSearchNumResults(3)
@@ -162,7 +165,34 @@ class WelcomeScreenFragment: Fragment() {
 
                 _userViewModel.setCreditUsage(1)
                 Log.d(TAG, "creditUsage: ${_userViewModel.getCreditUsage()}")
+
+                _userViewModel.setCompletionCreditPrice(1)
+                _userViewModel.setRecordCreditPrice(5)
             }
+        }
+    }
+
+    fun checkAppVersion(configAppVersion:String){
+        Log.d(TAG, "current installed version: ${_userViewModel.getAppVersion()}")
+        Log.d(TAG, "server version: $configAppVersion")
+
+        if (configAppVersion != _userViewModel.getAppVersion()) {
+            Log.d(TAG, "outdated version!")
+            // Create dialog popup
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Update Required")
+                .setMessage("A new version of the app is available. Please update to continue using the app.")
+                .setPositiveButton("Update") { dialog, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    val packageName = context?.packageName
+                    intent.data = Uri.parse("market://details?id=${packageName}")
+                    startActivity(intent)
+                    //dialog.dismiss()
+                }
+                .setCancelable(false)
+                .show()
+        }else{
+            Log.d(TAG, "latest version!")
         }
     }
 

@@ -1,13 +1,25 @@
 package com.thinkbloxph.chatwithai
 
 import com.google.gson.JsonObject
+import com.thinkbloxph.chatwithai.network.model.TranscriptionResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.Headers
-import retrofit2.http.POST
+import retrofit2.http.*
 
 interface OpenAIAPIService {
-    @Headers("Content-Type: application/json", "Authorization: Bearer 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")
+    @Headers("Content-Type: application/json")
     @POST("/v1/chat/completions")
-    fun getCompletion(@Body body: JsonObject): Call<JsonObject>
+    fun getCompletion(
+        @Header("Authorization") authorization: String,
+        @Body body: JsonObject
+    ): Call<JsonObject>
+
+    @Multipart
+    @POST("/v1/audio/transcriptions")
+    fun getTranscription(
+        @Header("Authorization") token: String,
+        @Part file: MultipartBody.Part,
+        @Part("model") model: RequestBody?
+    ): Call<TranscriptionResponse>
 }

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.fragment.app.Fragment
@@ -20,6 +21,7 @@ import com.thinkbloxph.chatwithai.R
 import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentLoginScreenBinding
+import com.thinkbloxph.chatwithai.helper.AudioRecorder
 import com.thinkbloxph.chatwithai.helper.FirebaseHelper
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.Provider
@@ -38,6 +40,7 @@ class LoginScreenFragment: Fragment() {
     private val firebaseHelper = FirebaseHelper()
     private val userDb = UserDatabase()
     private lateinit var callback: OnBackPressedCallback
+    private var versionText: TextView? = null
 
     //private var facebookApi: FacebookApi? = null
 
@@ -46,12 +49,7 @@ class LoginScreenFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentLoginScreenBinding.inflate(inflater, container, false)
-
-        val packageManager = context?.packageManager
-        val packageName = context?.packageName
-        val packageInfo = packageManager?.getPackageInfo("com.thinkbloxph.chatwithai", 0)
-        val versionName = packageInfo?.versionName
-        binding.versionNameTextview.text = "v:$versionName"
+        versionText = binding.versionNameTextview
 
         // this is called once here because this is the 1st screen or fragment that will always be loaded 1st
         // after main activity
@@ -70,6 +68,17 @@ class LoginScreenFragment: Fragment() {
         this.activity?.let { GoogleApi.initInstance(it.application, this.requireActivity(), this) }
         GoogleApi.getInstance()?.init()
 
+        if (AudioRecorder.getInstance() == null) {
+            this.activity?.application?.let {
+                AudioRecorder.initInstance(
+                    it,
+                    this.requireActivity(),
+                    this
+                )
+            }
+            AudioRecorder.getInstance()?.init()
+        }
+
         // Inflate the layout for this fragment
         return binding.root
     }
@@ -82,6 +91,14 @@ class LoginScreenFragment: Fragment() {
             userViewModel = _userViewModel
             loginScreenFragment = this@LoginScreenFragment
         }
+
+        val packageManager = context?.packageManager
+        val packageName = context?.packageName
+        val packageInfo = packageName?.let { packageManager?.getPackageInfo(it, 0) }
+        val versionName = packageInfo?.versionName
+        versionText!!.text = "v:$versionName"
+
+        versionName?.let { _userViewModel.setAppVersion(it) }
 
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null) {

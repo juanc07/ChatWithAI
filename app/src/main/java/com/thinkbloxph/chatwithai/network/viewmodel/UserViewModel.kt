@@ -56,6 +56,18 @@ class UserViewModel : ViewModel() {
     private val _currentPrompt = MutableLiveData<String>()
     val currentPrompt: LiveData<String> = _currentPrompt
 
+    private val _gptToken = MutableLiveData<String>()
+    val gptToken: LiveData<String> = _gptToken
+
+    private val _completionCreditPrice = MutableLiveData<Long>()
+    val completionCreditPrice: LiveData<Long> = _completionCreditPrice
+
+    private val _recordCreditPrice = MutableLiveData<Long>()
+    val recordCreditPrice: LiveData<Long> = _recordCreditPrice
+
+    private val _appVersion = MutableLiveData<String>()
+    val appVersion: LiveData<String> = _appVersion
+
     fun setFirebaseUserId(firebaseUserId: String) {
         _firebaseUserId.value = firebaseUserId
     }
@@ -190,6 +202,38 @@ class UserViewModel : ViewModel() {
 
     fun getCurrentPrompt(): String {
         return _currentPrompt.value.toString()
+    }
+
+    fun setGptToken(value: String) {
+        _gptToken.value = value
+    }
+
+    fun getGptToken(): String {
+        return _gptToken.value.toString()
+    }
+
+    fun setCompletionCreditPrice(value: Long) {
+        _completionCreditPrice.value = value
+    }
+
+    fun getCompletionCreditPrice(): Long? {
+        return _completionCreditPrice.value
+    }
+
+    fun setRecordCreditPrice(value: Long) {
+        _recordCreditPrice.value = value
+    }
+
+    fun getRecordCreditPrice(): Long? {
+        return _recordCreditPrice.value
+    }
+
+    fun setAppVersion(value: String) {
+        _appVersion.value = value
+    }
+
+    fun getAppVersion(): String {
+        return _appVersion.value.toString()
     }
 
     fun reset() {

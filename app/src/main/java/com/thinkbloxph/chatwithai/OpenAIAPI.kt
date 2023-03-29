@@ -12,6 +12,13 @@ import retrofit2.HttpException
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.Context
 import android.util.Log
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
 
 private const val INNER_TAG = "OpenAIAPI"
@@ -32,7 +39,7 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
             .create(OpenAIAPIService::class.java)
     }
 
-    suspend fun getCompletion(message:String,prompt:String,prevMessage:String?): List<String> {
+    suspend fun getCompletion(message:String,prompt:String,prevMessage:String?,gptToken:String): List<String> {
         Log.d(TAG, "[INNER_TAG}]: prompt: ${prompt}")
         val json = JsonObject().apply {
             addProperty("model", "gpt-3.5-turbo")
@@ -59,7 +66,13 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
 
         return withContext(Dispatchers.IO) {
             try {
-                val call = openAIAPIService.getCompletion(json)
+
+                val call = openAIAPIService.getCompletion(
+                    "Bearer $gptToken",
+                    json
+                )
+
+               // val call = openAIAPIService.getCompletion(json)
                 val response = call.execute()
 
                 if (response.isSuccessful) {
@@ -96,7 +109,7 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
         return tokens.size <= 2048
     }
 
-    suspend fun summarizeText(message:String): List<String> {
+    suspend fun summarizeText(message:String,gptToken:String): List<String> {
         val commandMsg = "Please summarize the following text:\n$message"
         Log.d(TAG, "[INNER_TAG}]: commandMsg: ${commandMsg}")
         val json = JsonObject().apply {
@@ -123,7 +136,12 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
         return withContext(Dispatchers.IO) {
             try {
                 //val call = openAIAPIService.getCompletion(json)
-                val call = openAIAPIService.getCompletion(json)
+                //val call = openAIAPIService.getCompletion(json)
+
+                val call = openAIAPIService.getCompletion(
+                    "Bearer $gptToken",
+                    json
+                )
                 val response = call.execute()
 
                 if (response.isSuccessful) {
@@ -134,6 +152,54 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
                     emptyList()
                 }
             } catch (e: IOException) {
+                withContext(Dispatchers.Main) {
+                    MaterialAlertDialogBuilder(context)
+                        .setTitle("Error")
+                        .setMessage("Something went wrong. Please try again later.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+                emptyList()
+            } catch (e: HttpException) {
+                withContext(Dispatchers.Main) {
+                    MaterialAlertDialogBuilder(context)
+                        .setTitle("Error")
+                        .setMessage("Something went wrong. Please try again later.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+                emptyList()
+            }
+        }
+    }
+
+    suspend fun transcribeAudio(file: File, gptToken: String): List<String> {
+        Log.d(TAG, "[INNER_TAG}]: transcribeAudio file: ${file}")
+        Log.d(TAG, "[INNER_TAG}]: transcribeAudio gptToken: ${gptToken}")
+        // Create request body
+        val requestBody = "whisper-1".toRequestBody()
+        //val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        //val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+        val filePart = MultipartBody.Part.createFormData("file", file.name, file.asRequestBody())
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val call = openAIAPIService.getTranscription(
+                    "Bearer $gptToken",
+                    filePart,
+                    requestBody
+                )
+                val response = call.execute()
+
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    val transcripts = result?.text
+                    transcripts?.let { listOf(it) } ?: emptyList()
+                } else {
+                    emptyList()
+                }
+            } catch (e: IOException) {
+                Log.d(TAG, "[INNER_TAG}]: transcribeAudio error: ${e.toString()}")
                 withContext(Dispatchers.Main) {
                     MaterialAlertDialogBuilder(context)
                         .setTitle("Error")

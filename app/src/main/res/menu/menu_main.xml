@@ -3,11 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.forage.MainActivity">
 
-   <!-- <item
-        android:id="@+id/action_spinner"
-        android:title="@string/choices_prompt"
+    <item
+        android:id="@+id/switch_toggle"
+        android:title="Toggle Switch"
         app:showAsAction="always"
-        app:actionViewClass="androidx.appcompat.widget.AppCompatSpinner" />-->
+        app:actionViewClass="androidx.appcompat.widget.SwitchCompat"
+        android:icon="@drawable/baseline_toggle_on_24"
+        android:checked="false" />
 
     <item android:id="@+id/action_button"
         android:title="Clear Message"
