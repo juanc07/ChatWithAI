@@ -49,37 +49,10 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
 
     private var isEnableSpeaking: Boolean = false
     private var isSpeaking: Boolean = false
-
     private lateinit var reminderManager: ReminderManager
-
-    //private var currentPrompt:String = ""
     private lateinit var callback: OnBackPressedCallback
     private var isRecording = false
-    val permissionManager = PermissionManager.getInstance()
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
-        /* val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
-         val spinnerState = Bundle().apply {
-             if(spinnerItem?.selectedItemPosition!=null){
-                 putInt("selected_item_position", spinnerItem.selectedItemPosition)
-             }
-         }
-         outState.putBundle("spinner_state", spinnerState)*/
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        /*if (savedInstanceState != null) {
-            val spinnerItem = requireActivity().findViewById<AppCompatSpinner>(R.id.action_spinner)
-            val spinnerState = savedInstanceState.getBundle("spinner_state")
-            if (spinnerState != null) {
-                spinnerItem.setSelection(spinnerState.getInt("selected_item_position"))
-            }
-        }*/
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -270,9 +243,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
-
         val switchMenuItem = menu.findItem(R.id.switch_toggle)
-
         switchMenuItem.actionView?.findViewById<SwitchCompat>(R.id.switch_toggle)
             ?.setOnCheckedChangeListener { _, isChecked ->
                 // Handle the switch toggle event here
@@ -280,75 +251,6 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                 isEnableSpeaking = isChecked
                 recordButton.isEnabled = isChecked
             }
-
-        /*currentPrompt = getString(R.string.chatty)
-
-        val spinnerItem = menu.findItem(R.id.action_spinner)
-        val spinner = spinnerItem.actionView as AppCompatSpinner
-        val choices = resources.getStringArray(R.array.choices_array)
-        val adapter = ArrayAdapter(requireContext(), R.layout.spinner_item_layout, choices)
-        spinner.adapter = adapter
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val choice = choices[position]
-
-                when (choice) {
-                    "Chatty" -> {
-                        currentPrompt = getString(R.string.chatty)
-                        Log.d("SpinnerSelection", "Selected Chatty!")
-                    }
-                    "Direct to the point" -> {
-                        currentPrompt = getString(R.string.direct_to_point)
-                        Log.d("SpinnerSelection", "Selected Direct to the point!")
-                    }
-                    "Talking to kids" -> {
-                        currentPrompt = getString(R.string.talking_to_kids)
-                        Log.d("SpinnerSelection", "Selected Talking to kids!")
-                    }
-                    "As a Friend" -> {
-                        currentPrompt = getString(R.string.as_a_friend)
-                        Log.d("SpinnerSelection", "Selected As a Friend!")
-                    }
-                    "Markdown Format" -> {
-                        currentPrompt = getString(R.string.format_markdown)
-                        Log.d("SpinnerSelection", "Selected Markdown Format!")
-                    }
-                    "Punchy and Attention Grabber" -> {
-                        currentPrompt = getString(R.string.punchy_and_attention_grabber)
-                        Log.d("SpinnerSelection", "Selected Punchy and Attention Grabber!")
-                    }
-                    "Persuasive and storyteller" -> {
-                        currentPrompt = getString(R.string.persuasive_and_story_teller)
-                        Log.d("SpinnerSelection", "Selected Persuasive and storyteller!")
-                    }
-                    "Clear and easy" -> {
-                        currentPrompt = getString(R.string.clear_and_easy)
-                        Log.d("SpinnerSelection", "Selected Clear and easy!")
-                    }
-                    "Creative and descriptive" -> {
-                        currentPrompt = getString(R.string.creative_and_descriptive)
-                        Log.d("SpinnerSelection", "Selected Creative and descriptive!")
-                    }
-                    "Professional and informative" -> {
-                        currentPrompt = getString(R.string.professional_and_informative)
-                        Log.d("SpinnerSelection", "Selected Professional and informative!")
-                    }
-                    "Formal complex and in-depth" -> {
-                        currentPrompt = getString(R.string.formal_complex_in_depth)
-                        Log.d("SpinnerSelection", "Selected Formal complex and in-depth!")
-                    }
-                    "Summarize" -> {
-                        currentPrompt = getString(R.string.summarize)
-                        Log.d("SpinnerSelection", "Selected Summarize!")
-                    }
-                }
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                // do nothing
-            }
-        }*/
-
         super.onCreateOptionsMenu(menu, inflater)
     }
 

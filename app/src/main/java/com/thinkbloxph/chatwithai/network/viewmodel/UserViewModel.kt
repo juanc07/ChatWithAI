@@ -245,5 +245,7 @@ class UserViewModel : ViewModel() {
         _enableSearch.value = true
         _searchNumResults.value = 3
         _creditUsage.value = 1
+        _completionCreditPrice.value = 1
+        _recordCreditPrice.value = 5
     }
 }
