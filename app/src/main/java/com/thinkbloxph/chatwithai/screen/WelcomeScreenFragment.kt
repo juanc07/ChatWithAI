@@ -154,6 +154,8 @@ class WelcomeScreenFragment: Fragment() {
                 _userViewModel.setGptToken(RemoteConfigManager.getString("gpt_token"))
                 _userViewModel.setCompletionCreditPrice(RemoteConfigManager.getLong("completion_credit_price"))
                 _userViewModel.setRecordCreditPrice(RemoteConfigManager.getLong("record_credit_price"))
+                _userViewModel.setGptModel(RemoteConfigManager.getString("gpt_model"))
+                Log.d(TAG, "gpt_model: ${_userViewModel.getGptModel()}")
                 checkAppVersion(appVersion)
             }else{
                 // default
@@ -168,6 +170,8 @@ class WelcomeScreenFragment: Fragment() {
 
                 _userViewModel.setCompletionCreditPrice(1)
                 _userViewModel.setRecordCreditPrice(5)
+                _userViewModel.setInitialFreeCredit(10)
+                _userViewModel.setGptModel("gpt-4")
             }
         }
     }

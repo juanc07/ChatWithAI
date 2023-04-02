@@ -7,12 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
@@ -23,6 +23,7 @@ import com.thinkbloxph.chatwithai.api.GoogleApi
 import com.thinkbloxph.chatwithai.databinding.FragmentLoginScreenBinding
 import com.thinkbloxph.chatwithai.helper.AudioRecorder
 import com.thinkbloxph.chatwithai.helper.FirebaseHelper
+import com.thinkbloxph.chatwithai.helper.RemoteConfigManager
 import com.thinkbloxph.chatwithai.helper.UIHelper
 import com.thinkbloxph.chatwithai.network.Provider
 import com.thinkbloxph.chatwithai.network.UserDatabase
@@ -38,7 +39,7 @@ class LoginScreenFragment: Fragment() {
 
     private lateinit var firebaseAuth: FirebaseAuth
     private val firebaseHelper = FirebaseHelper()
-    private val userDb = UserDatabase()
+    private var userDb: UserDatabase? = null
     private lateinit var callback: OnBackPressedCallback
     private var versionText: TextView? = null
 
@@ -57,6 +58,8 @@ class LoginScreenFragment: Fragment() {
 
         firebaseAuth = Firebase.auth
         firebaseAuth.setLanguageCode("en")
+
+        fetchRemoteConfig()
 
         UIHelper.initInstance(this.requireActivity(), this)
         UIHelper.getInstance()?.init()
@@ -99,12 +102,17 @@ class LoginScreenFragment: Fragment() {
         versionText!!.text = "v:$versionName"
 
         versionName?.let { _userViewModel.setAppVersion(it) }
+        val options = FirebaseOptions.fromResource(requireContext())
+        options?.databaseUrl?.let { _userViewModel.setDefaultDBUrl(it) }
+        Log.d(TAG, "default_db_url: ${_userViewModel.getDefaultDBUrl()}")
+        userDb = UserDatabase(_userViewModel.getDefaultDBUrl())
 
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null) {
             UIHelper.getInstance().showLoading()
             getSetProvider()
-            userDb.checkIfDataExists(currentUser.uid, callback = {
+
+            userDb!!.checkIfDataExists(currentUser.uid, callback = {
                     exists->
                 if(exists){
                     loadUserData(currentUser.uid)
@@ -124,6 +132,7 @@ class LoginScreenFragment: Fragment() {
                 requireActivity().finishAffinity()
             }
         }
+
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
@@ -131,6 +140,24 @@ class LoginScreenFragment: Fragment() {
         super.onStart()
         // hide the action back button
         //UIHelper.getInstance().showHideBackButton(false)
+    }
+
+    private fun fetchRemoteConfig(){
+        // Load the latest values from the server
+        RemoteConfigManager.load { isSuccessful->
+            if(isSuccessful){
+                _userViewModel.setInitialFreeCredit(RemoteConfigManager.getLong("initial_free_credit"))
+            }else{
+                // default
+                _userViewModel.setSearchNumResults(3)
+                _userViewModel.setEnableSearch(true)
+                _userViewModel.setCreditUsage(1)
+                _userViewModel.setCompletionCreditPrice(1)
+                _userViewModel.setRecordCreditPrice(5)
+                _userViewModel.setInitialFreeCredit(10)
+                _userViewModel.setGptModel("gpt-4")
+            }
+        }
     }
 
     /*fun continueWithFB() {
@@ -191,7 +218,7 @@ class LoginScreenFragment: Fragment() {
             if (firebaseUser != null) {
                 var currentUser = firebaseAuth.currentUser;
                 if(currentUser!=null){
-                    userDb.checkIfDataExists(currentUser.uid) { exists ->
+                    userDb?.checkIfDataExists(currentUser.uid) { exists ->
                         if (exists) {
                             loadUserData(currentUser.uid)
                         } else {
@@ -207,8 +234,8 @@ class LoginScreenFragment: Fragment() {
                                 _userViewModel.getEmail(), _userViewModel.getPhoneNumber(),
                                 _userViewModel.getGoogleUserId(), _userViewModel.getFacebookUserId(),
                                 _userViewModel.getCredit(), _userViewModel.getIsSubscribed()
-                                )
-                            userDb.saveCurrentUserToDatabase(user) { isSuccess ->
+                            )
+                            userDb!!.saveCurrentUserToDatabase(user) { isSuccess ->
                                 if (isSuccess) {
                                     UIHelper.getInstance().hideLoading()
                                     findNavController().navigate(R.id.action_loginScreenFragment_to_welcomeScreenFragment)
@@ -235,7 +262,7 @@ class LoginScreenFragment: Fragment() {
     }
 
     fun loadUserData(uid:String){
-        userDb.loadUserData(uid) { user ->
+        userDb?.loadUserData(uid) { user ->
             if (user != null) {
                 // Do something with the loaded user data
                 user.googleId?.let { googleId-> _userViewModel.setGoogleUserId(googleId) }
@@ -282,7 +309,7 @@ class LoginScreenFragment: Fragment() {
             currentUser.displayName?.let { displayName-> _userViewModel.setDisplayName(displayName) }
             currentUser.phoneNumber?.let { phoneNumber-> _userViewModel.setPhoneNumber(phoneNumber) }
             currentUser.email?.let { email-> _userViewModel.setEmail(email) }
-            _userViewModel.setCredit(5)
+            _userViewModel.setCredit(_userViewModel.getInitialFreeCredit()?.toInt())
             _userViewModel.setIsSubscribed(false)
             _userViewModel.setCreatedDate(System.currentTimeMillis())
             getSetProvider()

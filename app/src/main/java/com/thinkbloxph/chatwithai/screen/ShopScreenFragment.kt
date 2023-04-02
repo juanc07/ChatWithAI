@@ -41,7 +41,7 @@ class ShopScreenFragment: Fragment() {
     private lateinit var creditText:TextView
     private lateinit var subscriptionBtn:Button
     private lateinit var inAppPurchaseManager: InAppPurchaseManager
-    private val userDb = UserDatabase()
+    private var userDb:UserDatabase? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,6 +86,8 @@ class ShopScreenFragment: Fragment() {
             userViewModel = _userViewModel
             shopScreenFragment = this@ShopScreenFragment
         }
+
+        userDb = UserDatabase(_userViewModel.getDefaultDBUrl())
 
         _userViewModel.credit.observe(viewLifecycleOwner, Observer { credit ->
             // Do something with the new credit value
@@ -193,7 +195,7 @@ class ShopScreenFragment: Fragment() {
 
     private fun updateCredit(creditToAdd:Int){
         _userViewModel.getCredit()?.let { it1 ->
-            userDb.updateCredit(it1,creditToAdd, callback = { newCredit, isSuccess->
+            userDb?.updateCredit(it1,creditToAdd, callback = { newCredit, isSuccess->
                 if(isSuccess){
                     if (newCredit != null) {
                         _userViewModel.setCredit(newCredit)
@@ -283,7 +285,7 @@ class ShopScreenFragment: Fragment() {
                 }else{
                     if(sku == SkuConstants.SubscriptionSku){
                         Log.v(TAG, "[${INNER_TAG}]: purchase subscription unli credit success!")
-                        userDb.updateSubscription(true)
+                        userDb?.updateSubscription(true)
                         _userViewModel.setIsSubscribed(true)
                     }
                 }
@@ -295,7 +297,7 @@ class ShopScreenFragment: Fragment() {
                 if (isSuccess) {
                     if(sku == SkuConstants.SubscriptionSku){
                         Log.v(TAG, "[${INNER_TAG}]: unSubscribe unli credit success!")
-                        userDb.updateSubscription(false)
+                        userDb?.updateSubscription(false)
                         _userViewModel.setIsSubscribed(false)
                     }
                 }else{

@@ -97,7 +97,7 @@ class AudioRecorder(val _application: Application, val _activity: Activity, val 
                     }
                 }
 
-        Log.e(INNER_TAG, "AudioRecorder init!")
+        Log.i(INNER_TAG, "AudioRecorder init!")
     }
 
     fun checkPermission():Boolean{

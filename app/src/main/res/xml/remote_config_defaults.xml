@@ -44,5 +44,13 @@
         <key>record_credit_price</key>
         <value>5</value>
     </entry>
+    <entry>
+        <key>initial_free_credit</key>
+        <value>10</value>
+    </entry>
+    <entry>
+        <key>gpt_model</key>
+        <value>gpt-4</value>
+    </entry>
     <!-- Add more parameters here -->
 </defaultsMap>

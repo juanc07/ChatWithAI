@@ -44,7 +44,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
     private lateinit var sendButton: Button
     private lateinit var recordButton: Button
     private lateinit var messageInputField: TextInputEditText
-    private val userDb = UserDatabase()
+    private var userDb:UserDatabase? = null
     private var simulateTyping: Boolean = false
 
     private var isEnableSpeaking: Boolean = false
@@ -294,18 +294,21 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                             messageText,
                             _userViewModel.getCurrentPrompt(),
                             MessageCollector.getPreviousMessages(),
-                            _userViewModel.getGptToken()
+                            _userViewModel.getGptToken(),
+                            _userViewModel.getGptModel()
                         )
                     } else {
                         var prevMessage = openAI.summarizeText(
                             MessageCollector.getPreviousMessages(),
-                            _userViewModel.getGptToken()
+                            _userViewModel.getGptToken(),
+                            _userViewModel.getGptModel()
                         ).toString()
                         messages = openAI.getCompletion(
                             messageText,
                             _userViewModel.getCurrentPrompt(),
                             prevMessage,
-                            _userViewModel.getGptToken()
+                            _userViewModel.getGptToken(),
+                            _userViewModel.getGptModel()
                         )
                     }
                 } else {
@@ -313,7 +316,8 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                         messageText,
                         _userViewModel.getCurrentPrompt(),
                         null,
-                        _userViewModel.getGptToken()
+                        _userViewModel.getGptToken(),
+                        _userViewModel.getGptModel()
                     )
                 }
 
@@ -373,7 +377,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
             var creditToDeduct =
                 (creditPrice * -1).toInt()
             _userViewModel.getCredit()?.let { it1 ->
-                userDb.updateCredit(
+                userDb?.updateCredit(
                     it1,
                     creditToDeduct,
                     callback = { newCredit, isSuccess ->
@@ -465,6 +469,8 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
             userViewModel = _userViewModel
             chatScreenFragment = this@ChatScreenFragment
         }
+
+        userDb = UserDatabase(_userViewModel.getDefaultDBUrl())
 
         callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

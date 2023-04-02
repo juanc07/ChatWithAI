@@ -39,11 +39,12 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
             .create(OpenAIAPIService::class.java)
     }
 
-    suspend fun getCompletion(message:String,prompt:String,prevMessage:String?,gptToken:String): List<String> {
+    suspend fun getCompletion(message:String,prompt:String,prevMessage:String?,gptToken:String,gptModel:String): List<String> {
         Log.d(TAG, "[INNER_TAG}]: prompt: ${prompt}")
+        Log.d(TAG, "[INNER_TAG}]: getCompletion gptModel: ${gptModel}")
+        // model could be gpt-3.5-turbo, gpt-4
         val json = JsonObject().apply {
-            addProperty("model", "gpt-3.5-turbo")
-
+            addProperty("model",gptModel)
             add("messages", JsonArray().apply {
                 add(JsonObject().apply {
                     addProperty("role", "system")
@@ -109,11 +110,13 @@ class OpenAIAPI(private val coroutineScope: CoroutineScope,private val context: 
         return tokens.size <= 2048
     }
 
-    suspend fun summarizeText(message:String,gptToken:String): List<String> {
+    suspend fun summarizeText(message:String,gptToken:String,gptModel:String): List<String> {
+        // model could be gpt-3.5-turbo, gpt-4
         val commandMsg = "Please summarize the following text:\n$message"
         Log.d(TAG, "[INNER_TAG}]: commandMsg: ${commandMsg}")
+        Log.d(TAG, "[INNER_TAG}]: summarizeText gptModel: ${gptModel}")
         val json = JsonObject().apply {
-            addProperty("model", "gpt-3.5-turbo")
+            addProperty("model",gptModel)
             addProperty("temperature", 0.5)
             addProperty("max_tokens", 60)
             addProperty("top_p", 1.0)

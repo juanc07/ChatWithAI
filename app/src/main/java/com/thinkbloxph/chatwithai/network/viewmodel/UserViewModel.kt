@@ -68,6 +68,15 @@ class UserViewModel : ViewModel() {
     private val _appVersion = MutableLiveData<String>()
     val appVersion: LiveData<String> = _appVersion
 
+    private val _initialFreeCredit = MutableLiveData<Long>()
+    val initialFreeCredit: LiveData<Long> = _initialFreeCredit
+
+    private val _gptModel = MutableLiveData<String>()
+    val gptModel: LiveData<String> = _gptModel
+
+    private val _defaultDBUrl = MutableLiveData<String>()
+    val defaultDBUrl: LiveData<String> = _defaultDBUrl
+
     fun setFirebaseUserId(firebaseUserId: String) {
         _firebaseUserId.value = firebaseUserId
     }
@@ -124,8 +133,8 @@ class UserViewModel : ViewModel() {
         return _facebookUserId.value.toString()
     }
 
-    fun setCredit(credit: Int) {
-        _credit.value = credit
+    fun setCredit(credit: Int?) {
+        _credit.value = credit!!
     }
 
     fun getCredit(): Int? {
@@ -234,6 +243,30 @@ class UserViewModel : ViewModel() {
 
     fun getAppVersion(): String {
         return _appVersion.value.toString()
+    }
+
+    fun setInitialFreeCredit(value: Long) {
+        _initialFreeCredit.value = value
+    }
+
+    fun getInitialFreeCredit(): Long? {
+        return _initialFreeCredit.value
+    }
+
+    fun setGptModel(value: String) {
+        _gptModel.value = value
+    }
+
+    fun getGptModel(): String {
+        return _gptModel.value.toString()
+    }
+
+    fun setDefaultDBUrl(value: String) {
+        _defaultDBUrl.value = value
+    }
+
+    fun getDefaultDBUrl(): String {
+        return _defaultDBUrl.value.toString()
     }
 
     fun reset() {

@@ -3,20 +3,23 @@ package com.thinkbloxph.chatwithai.network
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import com.thinkbloxph.chatwithai.TAG
 import com.thinkbloxph.chatwithai.network.model.User
 
 private const val INNER_TAG = "UserDatabase"
-class UserDatabase public constructor() {
+class UserDatabase public constructor(databaseUrl: String) {
     companion object {
-        private val instance = UserDatabase()
+        private var instance: UserDatabase? = null
 
-        fun getInstance(): UserDatabase {
-            return instance
+        fun getInstance(databaseUrl: String): UserDatabase {
+            if (instance == null) {
+                instance = UserDatabase(databaseUrl)
+            }
+            return instance as UserDatabase
         }
     }
+
+    private val firebaseDatabase: FirebaseDatabase = FirebaseDatabase.getInstance(databaseUrl)
 
     fun saveCurrentUserToDatabase(user: User, completion: (isSuccess:Boolean) -> Unit) {
         // Get the current user from Firebase Authentication
@@ -25,7 +28,7 @@ class UserDatabase public constructor() {
         // Save the user object to the database under their unique ID
         if (currentUser != null) {
             // Get a reference to the users node in the Realtime Database
-            val databaseRef = FirebaseDatabase.getInstance().getReference("users")
+            val databaseRef = firebaseDatabase.getReference("users")
 
             // Create a map to only include the required fields
             val userMap = mapOf(
@@ -62,8 +65,8 @@ class UserDatabase public constructor() {
             return
         }
 
-        // Get a reference to the user's node in the Realtime Database
-        val databaseRef = FirebaseDatabase.getInstance().getReference("users/${currentUser.uid}")
+        // Get a reference to the users node in the Realtime Database
+        val databaseRef = firebaseDatabase.getReference("users/${currentUser.uid}")
 
         databaseRef.runTransaction(object : Transaction.Handler {
             override fun doTransaction(currentData: MutableData): Transaction.Result {
@@ -114,7 +117,7 @@ class UserDatabase public constructor() {
 
         if(currentUser!=null){
             // Get a reference to the users node in the Realtime Database
-            val databaseRef = FirebaseDatabase.getInstance().getReference("users")
+            val databaseRef = firebaseDatabase.getReference("users")
 
             // Update the user's isSubscribed field
             val updates = mapOf("isSubscribed" to newStatus)
@@ -136,7 +139,7 @@ class UserDatabase public constructor() {
 
         if(currentUser != null) {
             // Get a reference to the users node in the Realtime Database
-            val databaseRef = FirebaseDatabase.getInstance().getReference("users")
+            val databaseRef = firebaseDatabase.getReference("users")
 
             // Update the user's facebookId field
             val updates = mapOf("facebookId" to newFacebookId)
@@ -154,7 +157,7 @@ class UserDatabase public constructor() {
 
 
     fun checkIfDataExists(uid: String,callback: (exists:Boolean) -> Unit) {
-        val usersRef = FirebaseDatabase.getInstance().getReference("users")
+        val usersRef = firebaseDatabase.getReference("users")
 
         var exists = false
 
@@ -176,7 +179,8 @@ class UserDatabase public constructor() {
     }
 
     fun loadUserData(uid: String, callback: (User?) -> Unit) {
-        val userRef = FirebaseDatabase.getInstance().getReference("users/$uid")
+        val userRef = firebaseDatabase.getReference("users/$uid")
+
         userRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 // Check if the snapshot has data
@@ -210,7 +214,7 @@ class UserDatabase public constructor() {
 
         if (currentUser != null) {
             // Get a reference to the users node in the Realtime Database
-            val databaseRef = FirebaseDatabase.getInstance().getReference("users")
+            val databaseRef = firebaseDatabase.getReference("users")
 
             // Remove the user's data from the database
             databaseRef.child(currentUser.uid).removeValue()
