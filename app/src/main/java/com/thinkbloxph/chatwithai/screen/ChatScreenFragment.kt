@@ -162,18 +162,9 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                                             }
                                             deductCredit(recordCreditPrice)
 
-                                            if(GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
+                                            if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
                                                 Log.d(TAG, "[${INNER_TAG}]:recordButton detect searching mode!!")
-                                                searchGoogle(firstMessage) { searchresult ->
-                                                    Log.d(TAG, "[${INNER_TAG}]: searchresult: ${searchresult}")
-                                                    var message = ChatMessage(searchresult, "AI", false, false)
-                                                    messageListAdapter.addMessage(message!!)
-                                                    messageInputField.text?.clear()
-                                                    deductCredit(searchCreditPrice!!)
-
-                                                    UIHelper.getInstance().hideLoading()
-                                                    enableDisableRecordSend(true)
-                                                }
+                                                startSearch(firstMessage, searchCreditPrice!!)
                                             }else{
                                                 Log.d(TAG, "[${INNER_TAG}]:recordButton detect none searching mode!!")
                                                 firstMessage?.let { actualFirstMessage ->
@@ -224,6 +215,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
             var remainingCredit = _userViewModel.getCredit()
             var isSubscribed = _userViewModel.getIsSubscribed()
             var completionCreditPrice = _userViewModel.getCompletionCreditPrice()
+            var searchCreditPrice = _userViewModel.getCompletionCreditPrice()
 
             Log.d(TAG, "[${INNER_TAG}]: check credit: ${remainingCredit}}!")
             if (remainingCredit != null && isSubscribed != null) {
@@ -233,11 +225,15 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                     val messageText = messageInputField.text.toString()
                     var message: ChatMessage? = null
                     if (!messageText.isNullOrEmpty() && !messageText.isBlank()) {
+                        message = ChatMessage(messageText, "me", false, false)
+                        messageListAdapter.addMessage(message!!)
+                        messageInputField.text?.clear()
                         try {
                             enableDisableRecordSend(false)
-                            if(GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
+                            if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
                                 Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
-                                lifecycleScope.launch {
+                                startSearch(messageText, searchCreditPrice!!)
+                                /*lifecycleScope.launch {
                                     searchGoogle(messageText) { finalMessage ->
                                         println(finalMessage)
                                         message = ChatMessage(finalMessage, "me", false, false)
@@ -247,12 +243,9 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                                         UIHelper.getInstance().hideLoading()
                                         enableDisableRecordSend(true)
                                     }
-                                }
+                                }*/
                             }else{
                                 Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
-                                message = ChatMessage(messageText, "me", false, false)
-                                messageListAdapter.addMessage(message!!)
-                                messageInputField.text?.clear()
                                 UIHelper.getInstance().showLoading()
                                 startCompletion(messageText, completionCreditPrice!!)
                             }
@@ -323,6 +316,55 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         // Call this method to hide the button
         _binding = null
         TextToSpeechHelper.getInstance().shutdown()
+    }
+
+    fun startSearch(messageText: String,completionCreditPrice:Long){
+        lifecycleScope.launch {
+            var messages: List<String>? = null
+            val searchResults = searchGoogle(messageText)
+            Log.d(
+                TAG,
+                "[${INNER_TAG}]: searchResults $searchResults"
+            )
+
+            val clickableResults = mutableListOf<SpannableString>()
+            for (result in searchResults) {
+                val clickableResult = GoogleSearchAPI.getInstance().makeClickableUrls(result)
+                clickableResults.add(clickableResult)
+            }
+
+            messages = listOf(TextUtils.join("\n\n", clickableResults))
+
+            withContext(Dispatchers.Main) {
+                if (!messages.isNullOrEmpty()) {
+                    // The messages are not empty
+                    // Do something with the messages here
+                    val firstMessage = messages[0]?.trim()
+                    if (firstMessage != null) {
+                        MessageCollector.addMessage(firstMessage)
+                    }
+
+                    UIHelper.getInstance().hideLoading()
+                    val aiResponse =
+                        firstMessage?.let { it1 ->
+                            ChatMessage(
+                                it1,
+                                "AI",
+                                false,
+                                true
+                            )
+                        }
+                    if (aiResponse != null) {
+                        messageListAdapter.addMessage(aiResponse)
+                    }
+
+                    deductCredit(completionCreditPrice)
+
+                    UIHelper.getInstance().hideLoading()
+                    enableDisableRecordSend(true)
+                }
+            }
+        }
     }
 
     private fun startCompletion(messageText: String,completionCreditPrice:Long) {
@@ -653,7 +695,12 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         firebaseAuth.signOut()
     }
 
-    private suspend fun searchGoogle(query: String, callback: (String) -> Unit) {
+    private suspend fun searchGoogle(query: String): List<Triple<String, String,String>> {
+        val decryptedApiKey = CryptoUtils.decrypt(_userViewModel.getEncryptedSearchApiKey(), _userViewModel.getSearchApiSecretKey())
+        return GoogleSearchAPI.getInstance().searchGoogle(query, decryptedApiKey, _userViewModel.getSearchEngineId(),_userViewModel.getSearchNumResults()!!)
+    }
+
+   /* private suspend fun searchGoogle(query: String, callback: (String) -> Unit) {
         val decryptedApiKey = CryptoUtils.decrypt(
             _userViewModel.getEncryptedSearchApiKey(),
             _userViewModel.getSearchApiSecretKey()
@@ -676,7 +723,8 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
 
         val finalMessage = TextUtils.join("\n\n", clickableResults).trim()
         callback(finalMessage)
-    }
+    }  */
+
 
 
     fun checkIfReminder(input: String): Pair<Boolean, String?> {
