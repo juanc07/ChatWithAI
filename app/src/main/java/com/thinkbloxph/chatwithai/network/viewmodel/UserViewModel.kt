@@ -41,9 +41,6 @@ class UserViewModel : ViewModel() {
     private val _enableSearch = MutableLiveData<Boolean>()
     val enableSearch: LiveData<Boolean> = _enableSearch
 
-    private val _creditUsage = MutableLiveData<Long>()
-    val creditUsage: LiveData<Long> = _creditUsage
-
     private val _encryptedSearchApiKey = MutableLiveData<String>()
     val encryptedSearchApiKey: LiveData<String> = _encryptedSearchApiKey
 
@@ -173,14 +170,6 @@ class UserViewModel : ViewModel() {
         return _enableSearch.value
     }
 
-    fun setCreditUsage(value: Long) {
-        _creditUsage.value = value
-    }
-
-    fun getCreditUsage(): Long? {
-        return _creditUsage.value
-    }
-
     fun setEncryptedSearchApiKey(value: String) {
         _encryptedSearchApiKey.value = value
     }
@@ -277,7 +266,6 @@ class UserViewModel : ViewModel() {
         _email.value = ""
         _enableSearch.value = true
         _searchNumResults.value = 3
-        _creditUsage.value = 1
         _completionCreditPrice.value = 1
         _recordCreditPrice.value = 5
     }

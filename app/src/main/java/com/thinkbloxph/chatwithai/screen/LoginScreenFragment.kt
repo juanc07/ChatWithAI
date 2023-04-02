@@ -151,7 +151,6 @@ class LoginScreenFragment: Fragment() {
                 // default
                 _userViewModel.setSearchNumResults(3)
                 _userViewModel.setEnableSearch(true)
-                _userViewModel.setCreditUsage(1)
                 _userViewModel.setCompletionCreditPrice(1)
                 _userViewModel.setRecordCreditPrice(5)
                 _userViewModel.setInitialFreeCredit(10)

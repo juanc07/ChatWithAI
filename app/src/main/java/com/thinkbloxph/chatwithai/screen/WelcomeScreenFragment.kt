@@ -147,7 +147,6 @@ class WelcomeScreenFragment: Fragment() {
                 Log.d(TAG, "searchNumResults: ${_userViewModel.getSearchNumResults()}")
                 _userViewModel.setEnableSearch(RemoteConfigManager.getBoolean("enable_search"))
                 Log.d(TAG, "enableSearch: ${_userViewModel.getEnableSearch()}")
-                _userViewModel.setCreditUsage(RemoteConfigManager.getLong("credit_usage"))
                 _userViewModel.setEncryptedSearchApiKey(RemoteConfigManager.getString("encryptedSearchApiKey"))
                 _userViewModel.setSearchApiSecretKey(RemoteConfigManager.getString("searchApiSecretKey"))
                 _userViewModel.setSearchEngineId(RemoteConfigManager.getString("searchEngineId"))
@@ -164,9 +163,6 @@ class WelcomeScreenFragment: Fragment() {
 
                 _userViewModel.setEnableSearch(true)
                 Log.d(TAG, "enableSearch: ${_userViewModel.getEnableSearch()}")
-
-                _userViewModel.setCreditUsage(1)
-                Log.d(TAG, "creditUsage: ${_userViewModel.getCreditUsage()}")
 
                 _userViewModel.setCompletionCreditPrice(1)
                 _userViewModel.setRecordCreditPrice(5)

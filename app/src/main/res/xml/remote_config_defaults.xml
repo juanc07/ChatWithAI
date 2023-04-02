@@ -17,10 +17,6 @@
         <value>true</value>
     </entry>
     <entry>
-        <key>credit_usage</key>
-        <value>1</value>
-    </entry>
-    <entry>
         <key>searchApiSecretKey</key>
         <value></value>
     </entry>
