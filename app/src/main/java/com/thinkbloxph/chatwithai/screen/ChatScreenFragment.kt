@@ -1,6 +1,8 @@
 package com.thinkbloxph.chatwithai.screen
 
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.TextUtils
 import android.util.Log
 import android.view.*
 import android.widget.Button
@@ -106,6 +108,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                 var isSubscribed = _userViewModel.getIsSubscribed()
                 var recordCreditPrice = _userViewModel.getRecordCreditPrice()
                 var completionCreditPrice = _userViewModel.getCompletionCreditPrice()
+                var searchCreditPrice = _userViewModel.getCompletionCreditPrice()
 
                 if (remainingCredit != null && isSubscribed != null) {
                     if (remainingCredit >= recordCreditPrice!! || isSubscribed) {
@@ -134,7 +137,6 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                                         openAI.transcribeAudio(file, _userViewModel.getGptToken())
 
                                     withContext(Dispatchers.Main) {
-                                        //println(messages)
                                         if (!recordedMessages.isNullOrEmpty()) {
                                             // The messages are not empty
                                             // Do something with the messages here
@@ -159,10 +161,26 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                                                 )
                                             }
                                             deductCredit(recordCreditPrice)
-                                            firstMessage?.let { actualFirstMessage ->
-                                                startCompletion(
-                                                    actualFirstMessage, completionCreditPrice!!
-                                                )
+
+                                            if(GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
+                                                Log.d(TAG, "[${INNER_TAG}]:recordButton detect searching mode!!")
+                                                searchGoogle(firstMessage) { searchresult ->
+                                                    Log.d(TAG, "[${INNER_TAG}]: searchresult: ${searchresult}")
+                                                    var message = ChatMessage(searchresult, "AI", false, false)
+                                                    messageListAdapter.addMessage(message!!)
+                                                    messageInputField.text?.clear()
+                                                    deductCredit(searchCreditPrice!!)
+
+                                                    UIHelper.getInstance().hideLoading()
+                                                    enableDisableRecordSend(true)
+                                                }
+                                            }else{
+                                                Log.d(TAG, "[${INNER_TAG}]:recordButton detect none searching mode!!")
+                                                firstMessage?.let { actualFirstMessage ->
+                                                    startCompletion(
+                                                        actualFirstMessage, completionCreditPrice!!
+                                                    )
+                                                }
                                             }
                                         } else {
                                             // The messages are empty
@@ -210,15 +228,41 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
             Log.d(TAG, "[${INNER_TAG}]: check credit: ${remainingCredit}}!")
             if (remainingCredit != null && isSubscribed != null) {
                 if (remainingCredit >= _userViewModel.getCompletionCreditPrice()!! || isSubscribed) {
+
                     // Send button click logic here
                     val messageText = messageInputField.text.toString()
+                    var message: ChatMessage? = null
                     if (!messageText.isNullOrEmpty() && !messageText.isBlank()) {
-                        enableDisableRecordSend(false)
-                        val message = ChatMessage(messageText, "me", false, false)
-                        messageListAdapter.addMessage(message)
-                        messageInputField.text?.clear()
-                        UIHelper.getInstance().showLoading()
-                        startCompletion(messageText, completionCreditPrice!!)
+                        try {
+                            enableDisableRecordSend(false)
+                            if(GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
+                                Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
+                                lifecycleScope.launch {
+                                    searchGoogle(messageText) { finalMessage ->
+                                        println(finalMessage)
+                                        message = ChatMessage(finalMessage, "me", false, false)
+                                        messageListAdapter.addMessage(message!!)
+                                        messageInputField.text?.clear()
+
+                                        UIHelper.getInstance().hideLoading()
+                                        enableDisableRecordSend(true)
+                                    }
+                                }
+                            }else{
+                                Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
+                                message = ChatMessage(messageText, "me", false, false)
+                                messageListAdapter.addMessage(message!!)
+                                messageInputField.text?.clear()
+                                UIHelper.getInstance().showLoading()
+                                startCompletion(messageText, completionCreditPrice!!)
+                            }
+                        }catch (e:Exception){
+                            Log.d(
+                                TAG,
+                                "[${INNER_TAG}]: sendButton e: $e"
+                            )
+                            showErrorDialog()
+                        }
                     } else if (messageText.contains(" ")) {
                         showDialog("Hey Buddy", "Please enter a message!")
                     } else {
@@ -323,11 +367,12 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
 
                 // Update UI with messages
                 withContext(Dispatchers.Main) {
-                    //println(messages)
+                    Log.v(TAG, "[${INNER_TAG}]: start complete result: $messages")
                     if (!messages.isNullOrEmpty()) {
                         // The messages are not empty
                         // Do something with the messages here
                         val firstMessage = messages[0]?.trim()
+                        Log.v(TAG, "[${INNER_TAG}]: start complete firstMessage: $firstMessage")
                         // for collecting summary of chat or context of chat
                         // to prevent ai to tell unrelated answer
                         firstMessage?.let { MessageCollector.addMessage(it) }
@@ -358,11 +403,13 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                     } else {
                         // The messages are empty
                         // Handle this case here
+                        Log.v(TAG, "[${INNER_TAG}]: start complete result: empty!")
                         showErrorDialog()
                     }
                 }
             } catch (e: Exception) {
                 // Show dialog to notify user of error
+                Log.v(TAG, "[${INNER_TAG}]: exception error:  $e")
                 withContext(Dispatchers.Main) {
                     showErrorDialog()
                 }
@@ -496,107 +543,83 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         when (_userViewModel.getCurrentPrompt()) {
             getString(R.string.email_mode) -> {
                 actionTitle = "Create an Email"
-                val message = ChatMessage(
-                    "Please give me the necessary details about the email, and I'll assist you in creating it.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Please give me the necessary details about the email, and I'll assist you in creating it.")
             }
             getString(R.string.report_mode) -> {
                 actionTitle = "Create a Report"
-                val message = ChatMessage(
-                    "Please provide me with the necessary details about the report, and I'll assist you in creating it.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Please provide me with the necessary details about the report, and I'll assist you in creating it.")
             }
             getString(R.string.twitter_post_mode) -> {
                 actionTitle = "Create a Twitter Post"
-                val message = ChatMessage(
-                    "Please share the details with me, and I'll assist you in creating your Tweet post.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Please share the details with me, and I'll assist you in creating your Tweet post.")
             }
             getString(R.string.facebook_post_mode) -> {
                 actionTitle = "Create a Facebook Post"
-                val message = ChatMessage(
-                    "Please provide me with the necessary information so that I can assist you in creating your Facebook post.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Please provide me with the necessary information so that I can assist you in creating your Facebook post.")
             }
             getString(R.string.article_mode) -> {
                 actionTitle = "Create an Article"
-                val message = ChatMessage(
-                    "Please give me the topic and specifics of your article, and I'll assist you in crafting it.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Please give me the topic and specifics of your article, and I'll assist you in crafting it.")
             }
             getString(R.string.contract_mode) -> {
                 actionTitle = "Create simple contract"
-                val message = ChatMessage(
-                    "Please provide me with the essential information regarding your contract, so that I can create it for you.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Please provide me with the essential information regarding your contract, so that I can create it for you.")
             }
             getString(R.string.summarize_mode) -> {
                 actionTitle = "Summarize Info"
-                val message = ChatMessage(
-                    "Please provide the information you would like me to simplify and summarize.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Please provide the information you would like me to simplify and summarize.")
             }
             getString(R.string.general_assistant_mode) -> {
                 actionTitle = "Ask anything you want?"
-                val message = ChatMessage(
-                    "Don't be shy! We'd love to hear from you and answer any questions you have.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("Don't be shy! We'd love to hear from you and answer any questions you have.")
             }
             getString(R.string.translator_mode) -> {
                 actionTitle = "Translate Text"
-                val message = ChatMessage(
-                    "I can help you improve and clarify any text you provide, and translate it into several languages including Spanish, French, German, and more. Just let me know the text and the language you want me to translate it into.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("I can help you improve and clarify any text you provide, and translate it into several languages including Spanish, French, German, and more. Just let me know the text and the language you want me to translate it into.")
             }
             getString(R.string.spelling_mode) -> {
                 actionTitle = "Correct Spelling"
-                val message = ChatMessage(
-                    "I can help you improve and clarify any text you provide. Please type the text you would like me to review or edit.",
-                    "AI",
-                    false,
-                    false
-                )
-                messageListAdapter.addMessage(message)
+                sendAIHintMessage("I can help you improve and clarify any text you provide. Please type the text you would like me to review or edit.")
+            }
+            getString(R.string.search_mode) -> {
+                actionTitle = "Search"
+                sendAIHintMessage("If you'd like, I can assist you with conducting a search on a topic, and then you can ask me any questions you may have about it.")
+            }
+            getString(R.string.product_description_mode) -> {
+                actionTitle = "Create Product Info"
+                sendAIHintMessage("Please share the necessary information about your product with me so that I can create it according to your needs.")
+            }
+            getString(R.string.english_teacher_mode) -> {
+                actionTitle = "English Teacher"
+                sendAIHintMessage("If you have any questions related to English, feel free to ask and I will provide explanations and teach you.")
+            }
+            getString(R.string.science_teacher_mode) -> {
+                actionTitle = "Science Teacher"
+                sendAIHintMessage("If you have any questions related to science, feel free to ask and I will be happy to provide you with explanations and teach you.")
+            }
+            getString(R.string.father_mode) -> {
+                actionTitle = "Father Advise"
+                sendAIHintMessage("I'll be playing the role of your father today, so if you have any problems, concerns, or questions, feel free to share them with me.")
+            }
+            getString(R.string.mother_mode) -> {
+                actionTitle = "Mother Advise"
+                sendAIHintMessage("Dear child, I'll be acting as your mother for today. If you have any problems, concerns, or questions, feel free to share them with me.")
             }
         }
 
         UIHelper.getInstance().setActionBarTitle(actionTitle)
+    }
+
+    fun sendAIHintMessage(hintMessage:String){
+        if(messageListAdapter.itemCount == 0){
+            val message = ChatMessage(
+                hintMessage,
+                "AI",
+                false,
+                false
+            )
+            messageListAdapter.addMessage(message)
+        }
     }
 
     private fun clearInput() {
@@ -630,18 +653,31 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         firebaseAuth.signOut()
     }
 
-    private suspend fun searchGoogle(query: String): List<Triple<String, String, String>> {
+    private suspend fun searchGoogle(query: String, callback: (String) -> Unit) {
         val decryptedApiKey = CryptoUtils.decrypt(
             _userViewModel.getEncryptedSearchApiKey(),
             _userViewModel.getSearchApiSecretKey()
         )
-        return GoogleSearchAPI.getInstance().searchGoogle(
-            query,
-            decryptedApiKey,
-            _userViewModel.getSearchEngineId(),
-            _userViewModel.getSearchNumResults()!!
-        )
+
+        val searchResults: List<Triple<String, String, String>> = withContext(Dispatchers.IO) {
+            GoogleSearchAPI.getInstance().searchGoogle(
+                query,
+                decryptedApiKey,
+                _userViewModel.getSearchEngineId(),
+                _userViewModel.getSearchNumResults()!!
+            )
+        }
+
+        val clickableResults = mutableListOf<SpannableString>()
+        for (result in searchResults) {
+            val clickableResult = GoogleSearchAPI.getInstance().makeClickableUrls(result)
+            clickableResults.add(clickableResult)
+        }
+
+        val finalMessage = TextUtils.join("\n\n", clickableResults).trim()
+        callback(finalMessage)
     }
+
 
     fun checkIfReminder(input: String): Pair<Boolean, String?> {
         // Parse the input to get the reminder time and message

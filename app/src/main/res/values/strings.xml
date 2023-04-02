@@ -33,14 +33,14 @@
     <string name="article">Article</string>
     <string name="summarize_text">Summarize</string>
     <string name="general_assistant">Assistant</string>
-    <string name="mother">Talk to Mother</string>
-    <string name="father">Talk to Father</string>
-    <string name="mentor">Talk to Mentor</string>
+    <string name="mother">Mother Advise</string>
+    <string name="father">Father Advise</string>
+    <string name="mentor">Mentor Advise</string>
     <string name="translate">Translate</string>
     <string name="english_teacher">English teacher</string>
     <string name="science_teacher">Science teacher</string>
     <string name="spelling">Spelling</string>
     <string name="create_essay">Essay</string>
     <string name="search">Search</string>
-    <string name="product_description">Production Description</string>
+    <string name="product_description">Product Info</string>
 </resources>
