@@ -234,13 +234,17 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                             if(isReminder){
                                 outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
                             }else{
-                                if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
-                                    Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
-                                    startSearch(messageText, searchCreditPrice!!)
+                                if(reminderManager.containsStopAlarmKeyword(messageText)){
+                                    reminderManager.cancelAlarm(1)
                                 }else{
-                                    Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
-                                    UIHelper.getInstance().showLoading()
-                                    startCompletion(messageText, completionCreditPrice!!)
+                                    if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
+                                        Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
+                                        startSearch(messageText, searchCreditPrice!!)
+                                    }else{
+                                        Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
+                                        UIHelper.getInstance().showLoading()
+                                        startCompletion(messageText, completionCreditPrice!!)
+                                    }
                                 }
                             }
                         }catch (e:Exception){

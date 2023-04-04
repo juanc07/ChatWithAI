@@ -49,13 +49,13 @@ class ReminderManager private constructor(private val context: Context) {
             val timeDiff = Duration.between(now, reminderTime)
             val alarmTitle = "$title in ${getTimeString(timeDiff.toMillis())}"
 
-            setAlarm(reminderTime, alarmTitle)
+            setAlarm(reminderTime, alarmTitle,1)
         } else {
             println("Invalid date and time provided")
         }
     }
 
-    private fun setAlarm(dateTime: LocalDateTime, title: String) {
+    /*private fun setAlarm(dateTime: LocalDateTime, title: String) {
         // Example implementation:
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, MyAlarmReceiver::class.java)
@@ -69,9 +69,9 @@ class ReminderManager private constructor(private val context: Context) {
         } else {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent)
         }
-    }
+    }*/
 
-    fun setAlarm(context: Context, datetime: LocalDateTime, title: String) {
+    fun setAlarm(datetime: LocalDateTime, title: String, alarmId: Int) {
 
         // Convert LocalDateTime to milliseconds
         val millis = datetime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -79,7 +79,7 @@ class ReminderManager private constructor(private val context: Context) {
         // Save the alarm details in SharedPreferences
         val sharedPreferences = context.getSharedPreferences("alarms", Context.MODE_PRIVATE)
         val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        alarmSet.add("$millis,$title")
+        alarmSet.add("$alarmId,$millis,$title")
         sharedPreferences.edit().putStringSet("alarmSet", alarmSet).apply()
 
         // Create an intent to broadcast the alarm
@@ -100,6 +100,33 @@ class ReminderManager private constructor(private val context: Context) {
         Toast.makeText(context, "Alarm set for $title", Toast.LENGTH_SHORT).show()
     }
 
+    fun cancelAlarm(alarmId: Int) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val intent = Intent(context, MyAlarmReceiver::class.java).apply {
+            action = "com.thinkbloxph.chatwithai.ALARM"
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        // Cancel the alarm
+        alarmManager.cancel(pendingIntent)
+
+        // Remove the alarm from SharedPreferences
+        val sharedPreferences = context.getSharedPreferences("alarms", Context.MODE_PRIVATE)
+        val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        val alarmToRemove = alarmSet.firstOrNull { it.startsWith("$alarmId,") }
+
+        if (alarmToRemove != null) {
+            alarmSet.remove(alarmToRemove)
+            sharedPreferences.edit().putStringSet("alarmSet", alarmSet).apply()
+        }
+
+        // Show a toast message
+        Toast.makeText(context, "Alarm canceled", Toast.LENGTH_SHORT).show()
+    }
+
+
     private fun getTimeString(timeDiff: Long): String {
         val hours = TimeUnit.MILLISECONDS.toHours(timeDiff)
         val minutes = TimeUnit.MILLISECONDS.toMinutes(timeDiff) % 60
@@ -110,6 +137,12 @@ class ReminderManager private constructor(private val context: Context) {
             minutes > 0 -> "${minutes}m ${seconds}s"
             else -> "${seconds}s"
         }
+    }
+
+    fun containsStopAlarmKeyword(input: String): Boolean {
+        val keywords = listOf("stop alarm", "cancel alarm", "stop reminder", "cancel reminder")
+        val regex = "\\b(${keywords.joinToString("|")})\\b".toRegex(RegexOption.IGNORE_CASE)
+        return regex.containsMatchIn(input)
     }
 
    /* fun parseReminderText(text: String): Pair<LocalDateTime?, String> {

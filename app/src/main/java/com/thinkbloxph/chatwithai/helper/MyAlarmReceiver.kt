@@ -34,6 +34,7 @@ class MyAlarmReceiver : BroadcastReceiver() {
         if (alarmSet != null) {
             for (alarmInfo in alarmSet) {
                 val parts = alarmInfo.split(",")
+                val alarmId = parts[0].toInt()
                 val millis = parts[0].toLong()
                 val title = parts[1]
 
@@ -44,7 +45,10 @@ class MyAlarmReceiver : BroadcastReceiver() {
                         action = "com.thinkbloxph.chatwithai.ALARM"
                         putExtra("title", title)
                     }
-                    val pendingIntent = PendingIntent.getBroadcast(context, millis.toInt(), intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    //val pendingIntent = PendingIntent.getBroadcast(context, millis.toInt(), intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    val pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+
                     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, millis, pendingIntent)
                 } else {
