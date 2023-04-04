@@ -162,15 +162,26 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                                             }
                                             deductCredit(recordCreditPrice)
 
-                                            if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
-                                                Log.d(TAG, "[${INNER_TAG}]:recordButton detect searching mode!!")
-                                                startSearch(firstMessage, searchCreditPrice!!)
+                                            val (isReminder, reminderText) = checkIfReminder(
+                                                firstMessage!!
+                                            )
+                                            if(isReminder){
+                                                outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
                                             }else{
-                                                Log.d(TAG, "[${INNER_TAG}]:recordButton detect none searching mode!!")
-                                                firstMessage?.let { actualFirstMessage ->
-                                                    startCompletion(
-                                                        actualFirstMessage, completionCreditPrice!!
-                                                    )
+                                                if(reminderManager.containsStopAlarmKeyword(firstMessage)){
+                                                    reminderManager.cancelAlarm(1)
+                                                }else{
+                                                    if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
+                                                        Log.d(TAG, "[${INNER_TAG}]:recordButton detect searching mode!!")
+                                                        startSearch(firstMessage, searchCreditPrice!!)
+                                                    }else{
+                                                        Log.d(TAG, "[${INNER_TAG}]:recordButton detect none searching mode!!")
+                                                        firstMessage?.let { actualFirstMessage ->
+                                                            startCompletion(
+                                                                actualFirstMessage, completionCreditPrice!!
+                                                            )
+                                                        }
+                                                    }
                                                 }
                                             }
                                         } else {
