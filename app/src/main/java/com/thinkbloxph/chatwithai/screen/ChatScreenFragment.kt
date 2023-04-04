@@ -230,24 +230,18 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                         messageInputField.text?.clear()
                         try {
                             enableDisableRecordSend(false)
-                            if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
-                                Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
-                                startSearch(messageText, searchCreditPrice!!)
-                                /*lifecycleScope.launch {
-                                    searchGoogle(messageText) { finalMessage ->
-                                        println(finalMessage)
-                                        message = ChatMessage(finalMessage, "me", false, false)
-                                        messageListAdapter.addMessage(message!!)
-                                        messageInputField.text?.clear()
-
-                                        UIHelper.getInstance().hideLoading()
-                                        enableDisableRecordSend(true)
-                                    }
-                                }*/
+                            val (isReminder, reminderText) = checkIfReminder(messageText)
+                            if(isReminder){
+                                outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
                             }else{
-                                Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
-                                UIHelper.getInstance().showLoading()
-                                startCompletion(messageText, completionCreditPrice!!)
+                                if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
+                                    Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
+                                    startSearch(messageText, searchCreditPrice!!)
+                                }else{
+                                    Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
+                                    UIHelper.getInstance().showLoading()
+                                    startCompletion(messageText, completionCreditPrice!!)
+                                }
                             }
                         }catch (e:Exception){
                             Log.d(
@@ -318,6 +312,34 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         TextToSpeechHelper.getInstance().shutdown()
     }
 
+    private fun outputAIMessage(messages: List<String>?, creditPrice:Long){
+        if (!messages.isNullOrEmpty()) {
+            // The messages are not empty
+            // Do something with the messages here
+            val firstMessage = messages[0]?.trim()
+            if (firstMessage != null) {
+                MessageCollector.addMessage(firstMessage)
+            }
+
+            val aiResponse =
+                firstMessage?.let { it1 ->
+                    ChatMessage(
+                        it1,
+                        "AI",
+                        false,
+                        true
+                    )
+                }
+            if (aiResponse != null) {
+                messageListAdapter.addMessage(aiResponse)
+            }
+
+            deductCredit(creditPrice)
+            UIHelper.getInstance().hideLoading()
+            enableDisableRecordSend(true)
+        }
+    }
+
     fun startSearch(messageText: String,completionCreditPrice:Long){
         lifecycleScope.launch {
             var messages: List<String>? = null
@@ -336,15 +358,13 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
             messages = listOf(TextUtils.join("\n\n", clickableResults))
 
             withContext(Dispatchers.Main) {
-                if (!messages.isNullOrEmpty()) {
-                    // The messages are not empty
-                    // Do something with the messages here
+                outputAIMessage(messages,completionCreditPrice)
+               /* if (!messages.isNullOrEmpty()) {
                     val firstMessage = messages[0]?.trim()
                     if (firstMessage != null) {
                         MessageCollector.addMessage(firstMessage)
                     }
 
-                    UIHelper.getInstance().hideLoading()
                     val aiResponse =
                         firstMessage?.let { it1 ->
                             ChatMessage(
@@ -362,7 +382,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
 
                     UIHelper.getInstance().hideLoading()
                     enableDisableRecordSend(true)
-                }
+                }*/
             }
         }
     }
@@ -700,33 +720,6 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         return GoogleSearchAPI.getInstance().searchGoogle(query, decryptedApiKey, _userViewModel.getSearchEngineId(),_userViewModel.getSearchNumResults()!!)
     }
 
-   /* private suspend fun searchGoogle(query: String, callback: (String) -> Unit) {
-        val decryptedApiKey = CryptoUtils.decrypt(
-            _userViewModel.getEncryptedSearchApiKey(),
-            _userViewModel.getSearchApiSecretKey()
-        )
-
-        val searchResults: List<Triple<String, String, String>> = withContext(Dispatchers.IO) {
-            GoogleSearchAPI.getInstance().searchGoogle(
-                query,
-                decryptedApiKey,
-                _userViewModel.getSearchEngineId(),
-                _userViewModel.getSearchNumResults()!!
-            )
-        }
-
-        val clickableResults = mutableListOf<SpannableString>()
-        for (result in searchResults) {
-            val clickableResult = GoogleSearchAPI.getInstance().makeClickableUrls(result)
-            clickableResults.add(clickableResult)
-        }
-
-        val finalMessage = TextUtils.join("\n\n", clickableResults).trim()
-        callback(finalMessage)
-    }  */
-
-
-
     fun checkIfReminder(input: String): Pair<Boolean, String?> {
         // Parse the input to get the reminder time and message
         val (reminderTime, reminderText) = reminderManager.parseReminderText(input)
@@ -737,6 +730,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
             reminderManager.setReminder(reminderTime, title)
 
             // Print the confirmation message
+            Log.d(TAG, "[${INNER_TAG}]:reminderTime: ${reminderTime}}!")
             println(reminderText)
             Log.d(TAG, "[${INNER_TAG}]:checkIfReminder: ${reminderText}}!")
             Pair(true, reminderText)
