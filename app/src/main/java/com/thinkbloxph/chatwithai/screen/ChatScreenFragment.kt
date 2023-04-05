@@ -162,14 +162,17 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                                             }
                                             deductCredit(recordCreditPrice)
 
-                                            val (isReminder, reminderText) = checkIfReminder(
-                                                firstMessage!!
-                                            )
-                                            if(isReminder){
-                                                outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
+                                            if(reminderManager.isStopAlarmOrReminder(firstMessage!!)){
+                                                Log.d(TAG, "[${INNER_TAG}]:recordButton detect stop alarm")
+                                                reminderManager.cancelAlarm( requireContext(),1)
+                                                UIHelper.getInstance().hideLoading()
+                                                enableDisableRecordSend(true)
                                             }else{
-                                                if(reminderManager.containsStopAlarmKeyword(firstMessage)){
-                                                    reminderManager.cancelAlarm(1)
+                                                val (isReminder, reminderText) = checkIfReminder(
+                                                    firstMessage
+                                                )
+                                                if(isReminder){
+                                                    outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
                                                 }else{
                                                     if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
                                                         Log.d(TAG, "[${INNER_TAG}]:recordButton detect searching mode!!")
@@ -241,13 +244,18 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                         messageInputField.text?.clear()
                         try {
                             enableDisableRecordSend(false)
-                            val (isReminder, reminderText) = checkIfReminder(messageText)
-                            if(isReminder){
-                                outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
+                            if(reminderManager.isStopAlarmOrReminder(messageText)){
+                                Log.d(TAG, "[${INNER_TAG}]:sendButton detect stop alarm")
+                                reminderManager.cancelAlarm(requireContext(),1)
+                                UIHelper.getInstance().hideLoading()
+                                enableDisableRecordSend(true)
                             }else{
-                                if(reminderManager.containsStopAlarmKeyword(messageText)){
-                                    reminderManager.cancelAlarm(1)
+                                val (isReminder, reminderText) = checkIfReminder(messageText)
+                                if(isReminder){
+                                    Log.d(TAG, "[${INNER_TAG}]:sendButton detect reminder")
+                                    outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
                                 }else{
+                                    Log.d(TAG, "[${INNER_TAG}]:sendButton else none reminder")
                                     if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
                                         Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
                                         startSearch(messageText, searchCreditPrice!!)
@@ -742,7 +750,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         // If the reminder time was successfully parsed, set the reminder
         return if (reminderTime != null) {
             val title = "Reminder!"
-            reminderManager.setReminder(reminderTime, title)
+            reminderManager.setReminder(reminderTime, title,1)
 
             // Print the confirmation message
             Log.d(TAG, "[${INNER_TAG}]:reminderTime: ${reminderTime}}!")

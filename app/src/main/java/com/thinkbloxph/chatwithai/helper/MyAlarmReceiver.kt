@@ -7,8 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.widget.Toast
+import android.media.MediaPlayer
 
 class MyAlarmReceiver : BroadcastReceiver() {
+    private var mediaPlayer: MediaPlayer? = null
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             // Reschedule alarms after device reboot
@@ -22,8 +24,25 @@ class MyAlarmReceiver : BroadcastReceiver() {
 
             // Play the alarm sound
             val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            val ringtone = RingtoneManager.getRingtone(context, uri)
-            ringtone.play()
+            mediaPlayer = MediaPlayer.create(context, uri)
+            mediaPlayer?.start()
+        }
+    }
+
+    fun stopAlarmSound() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
+
+    companion object {
+        private var instance: MyAlarmReceiver? = null
+
+        fun getInstance(): MyAlarmReceiver {
+            if (instance == null) {
+                instance = MyAlarmReceiver()
+            }
+            return instance!!
         }
     }
 
