@@ -89,7 +89,7 @@ class ReminderManager private constructor(private val context: Context) {
             putExtra("title", title)
         }
 
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getBroadcast(context, 0, intent,  PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         // Get the AlarmManager service
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -108,7 +108,7 @@ class ReminderManager private constructor(private val context: Context) {
             action = "com.thinkbloxph.chatwithai.ALARM"
         }
 
-        val pendingIntent = PendingIntent.getBroadcast(currContext, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getBroadcast(currContext, alarmId, intent,   PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         // Cancel the alarm
         alarmManager.cancel(pendingIntent)

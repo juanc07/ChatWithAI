@@ -104,7 +104,6 @@ class LoginScreenFragment: Fragment() {
         versionName?.let { _userViewModel.setAppVersion(it) }
         val options = FirebaseOptions.fromResource(requireContext())
         options?.databaseUrl?.let { _userViewModel.setDefaultDBUrl(it) }
-        Log.d(TAG, "default_db_url: ${_userViewModel.getDefaultDBUrl()}")
         userDb = UserDatabase(_userViewModel.getDefaultDBUrl())
 
         val currentUser = firebaseAuth.currentUser

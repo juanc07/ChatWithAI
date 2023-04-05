@@ -65,7 +65,7 @@ class MyAlarmReceiver : BroadcastReceiver() {
                         putExtra("title", title)
                     }
                     //val pendingIntent = PendingIntent.getBroadcast(context, millis.toInt(), intent, PendingIntent.FLAG_UPDATE_CURRENT)
-                    val pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    val pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent,   PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
 
                     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
