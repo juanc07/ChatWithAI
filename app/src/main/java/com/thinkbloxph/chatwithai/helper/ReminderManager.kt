@@ -5,23 +5,23 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
-import java.time.*
+import com.thinkbloxph.chatwithai.TAG
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.time.LocalDateTime
-import java.time.format.DateTimeParseException
-import java.time.Month
-import java.time.Year
 import java.util.regex.Pattern
-import java.time.temporal.ChronoUnit
 
-
+private const val INNER_TAG = "ReminderManager"
 
 class ReminderManager private constructor(private val context: Context) {
     companion object {
-        @Volatile private var INSTANCE: ReminderManager? = null
+        @Volatile
+        private var INSTANCE: ReminderManager? = null
 
         fun getInstance(context: Context): ReminderManager {
             return INSTANCE ?: synchronized(this) {
@@ -30,7 +30,7 @@ class ReminderManager private constructor(private val context: Context) {
         }
     }
 
-    fun setReminder(dateTime: LocalDateTime?, title: String,alarmId: Int) {
+    fun setReminder(currContext: Context, dateTime: LocalDateTime?, title: String) {
         val now = LocalDateTime.now()
 
         if (dateTime != null) {
@@ -50,85 +50,179 @@ class ReminderManager private constructor(private val context: Context) {
             val timeDiff = Duration.between(now, reminderTime)
             val alarmTitle = "$title in ${getTimeString(timeDiff.toMillis())}"
 
-            setAlarm(reminderTime, alarmTitle,alarmId)
+            setAlarm(currContext, reminderTime, alarmTitle)
         } else {
             println("Invalid date and time provided")
         }
     }
 
-    /*private fun setAlarm(dateTime: LocalDateTime, title: String) {
-        // Example implementation:
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, MyAlarmReceiver::class.java)
-        intent.putExtra("title", title)
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
 
-        val alarmTime = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent)
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent)
-        }
-    }*/
-
-    fun setAlarm(datetime: LocalDateTime, title: String, alarmId: Int) {
-
+    fun setAlarm(currContext: Context, datetime: LocalDateTime, title: String) {
         // Convert LocalDateTime to milliseconds
         val millis = datetime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         // Save the alarm details in SharedPreferences
-        val sharedPreferences = context.getSharedPreferences("alarms", Context.MODE_PRIVATE)
-        val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        val sharedPreferences = currContext.getSharedPreferences("alarms", Context.MODE_PRIVATE)
+        val alarmId = sharedPreferences.getInt("incrementAlarmId", 0) + 1
+        sharedPreferences.edit().putInt("incrementAlarmId", alarmId).apply()
+        sharedPreferences.edit().putInt("alarmId", alarmId).apply()
+        val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet()
+            ?: mutableSetOf()
         alarmSet.add("$alarmId,$millis,$title")
         sharedPreferences.edit().putStringSet("alarmSet", alarmSet).apply()
 
         // Create an intent to broadcast the alarm
-        val intent = Intent(context, MyAlarmReceiver::class.java).apply {
+        val intent = Intent(currContext, MyAlarmReceiver::class.java).apply {
             action = "com.thinkbloxph.chatwithai.ALARM"
+            putExtra("alarmId", alarmId)
             putExtra("title", title)
         }
 
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, intent,  PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getBroadcast(currContext, alarmId, intent, 0)
 
         // Get the AlarmManager service
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-        // Set the alarm
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, millis, pendingIntent)
-
-        // Show a toast message
-        Toast.makeText(context, "Alarm set for $title", Toast.LENGTH_SHORT).show()
-    }
-
-    fun cancelAlarm(currContext: Context, alarmId: Int) {
         val alarmManager = currContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        val intent = Intent(currContext, MyAlarmReceiver::class.java).apply {
-            action = "com.thinkbloxph.chatwithai.ALARM"
+        // Set the alarm
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, millis, pendingIntent)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, millis, pendingIntent)
+        } else {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, millis, pendingIntent)
         }
-
-        val pendingIntent = PendingIntent.getBroadcast(currContext, alarmId, intent,   PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-
-        // Cancel the alarm
-        alarmManager.cancel(pendingIntent)
-
-        // Remove the alarm from SharedPreferences
-        val sharedPreferences = currContext.getSharedPreferences("alarms", Context.MODE_PRIVATE)
-        val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        val alarmToRemove = alarmSet.firstOrNull { it.startsWith("$alarmId,") }
-
-        if (alarmToRemove != null) {
-            alarmSet.remove(alarmToRemove)
-            sharedPreferences.edit().putStringSet("alarmSet", alarmSet).apply()
-        }
-
-        MyAlarmReceiver.getInstance().stopAlarmSound()
 
         // Show a toast message
-        Toast.makeText(currContext, "Alarm canceled", Toast.LENGTH_SHORT).show()
+        Toast.makeText(currContext, "Alarm set for $title", Toast.LENGTH_SHORT).show()
     }
 
+    /*fun cancelAlarm(currContext: Context) {
+        // Retrieve the id of the currently active alarm
+        val sharedPreferences = currContext.getSharedPreferences("alarms", Context.MODE_PRIVATE)
+        val activeAlarmId = sharedPreferences.getInt("activeAlarmId", -1)
+        val activeTitle = sharedPreferences.getString("activeTitle", "no title")
+
+        Log.d(TAG, "[${INNER_TAG}]: cancelAlarm activeAlarmId: $activeAlarmId")
+        Log.d(TAG, "[${INNER_TAG}]: cancelAlarm activeTitle: $activeTitle")
+
+        if (activeAlarmId != -1) {
+            Log.d(TAG, "[${INNER_TAG}]: got active alarmId activeAlarmId: $activeAlarmId")
+            val alarmManager = currContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+            val intent = Intent(currContext, MyAlarmReceiver::class.java).apply {
+                action = "com.thinkbloxph.chatwithai.ALARM"
+                putExtra("alarmId", activeAlarmId)
+                putExtra("title", activeTitle)
+            }
+
+            //val pendingIntent = PendingIntent.getBroadcast(currContext, activeAlarmId, intent, PendingIntent.FLAG_CANCEL_CURRENT)
+            val pendingIntent = PendingIntent.getBroadcast(currContext, activeAlarmId, intent,0)
+
+            // Cancel the alarm
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+
+            // Remove the alarm from SharedPreferences
+            val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+            val alarmToRemove = alarmSet.firstOrNull { it.startsWith("$activeAlarmId,") }
+
+            if (alarmToRemove != null) {
+                alarmSet.remove(alarmToRemove)
+                sharedPreferences.edit().putStringSet("alarmSet", alarmSet).apply()
+            }
+
+            // Remove the id of the active alarm from SharedPreferences
+            sharedPreferences.edit().remove("activeAlarmId").apply()
+            sharedPreferences.edit().remove("activeTitle").apply()
+
+            MyAlarmReceiver.getInstance().stopAlarmSound()
+
+            // Show a toast message
+            Toast.makeText(currContext, "Alarm canceled", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "[${INNER_TAG}]: got active alarm canceled")
+        }
+    }*/
+
+    /* fun cancelAlarm(currContext: Context) {
+         val sharedPreferences = currContext.getSharedPreferences("alarms", Context.MODE_PRIVATE)
+         val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+
+         for (alarmInfo in alarmSet) {
+             val parts = alarmInfo.split(",")
+             val alarmId = parts[0].toInt()
+             val title = parts[1]
+
+             val alarmManager = currContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+             val intent = Intent(currContext, MyAlarmReceiver::class.java).apply {
+                 action = "com.thinkbloxph.chatwithai.ALARM"
+                 putExtra("alarmId", alarmId)
+                 putExtra("title", title)
+             }
+             //val pendingIntent = PendingIntent.getBroadcast(currContext, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+             val pendingIntent = PendingIntent.getBroadcast(currContext, alarmId, intent, 0)
+
+             // Cancel the alarm
+             alarmManager.cancel(pendingIntent)
+             Toast.makeText(currContext, "All Alarm canceled alarmId : $alarmId", Toast.LENGTH_SHORT).show()
+         }
+
+         // Remove all the alarms from SharedPreferences
+         sharedPreferences.edit().putStringSet("alarmSet", setOf()).apply()
+
+         MyAlarmReceiver.getInstance().stopAlarmSound()
+
+         // Show a toast message
+         Toast.makeText(currContext, "All Alarms canceled", Toast.LENGTH_SHORT).show()
+     }*/
+
+    fun cancelAlarm(currContext: Context) {
+        val sharedPreferences = context.getSharedPreferences("alarms", Context.MODE_PRIVATE)
+        val alarmSet = sharedPreferences.getStringSet("alarmSet", mutableSetOf())
+        val alarmInfo = alarmSet?.firstOrNull()
+
+        if (alarmInfo != null) {
+            val parts = alarmInfo.split(",")
+            val alarmId = parts[0].toInt()
+            val title = parts[2]
+
+            val intent = Intent(currContext, MyAlarmReceiver::class.java).apply {
+                action = "com.thinkbloxph.chatwithai.ALARM"
+                putExtra("alarmId", title)
+                putExtra("title", alarmId)
+            }
+
+            Log.d(TAG, "[${INNER_TAG}]: cancelAlarm activeAlarmId: $alarmId")
+            Log.d(TAG, "[${INNER_TAG}]: cancelAlarm activeTitle: $title")
+
+            val pendingIntent = PendingIntent.getBroadcast(currContext, alarmId, intent, 0)
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+            // Cancel the alarm
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+
+            // Remove the alarm from SharedPreferences
+            val alarmSet =
+                sharedPreferences.getStringSet("alarmSet", mutableSetOf())?.toMutableSet()
+                    ?: mutableSetOf()
+            val alarmToRemove = alarmSet.firstOrNull { it.startsWith("$alarmId,") }
+
+            if (alarmToRemove != null) {
+                alarmSet.remove(alarmToRemove)
+                sharedPreferences.edit().putStringSet("alarmSet", alarmSet).apply()
+            }
+
+            // Remove the id of the active alarm from SharedPreferences
+            sharedPreferences.edit().remove("activeAlarmId").apply()
+            sharedPreferences.edit().remove("activeTitle").apply()
+
+            MyAlarmReceiver.getInstance().stopAlarmSound()
+
+            // Show a toast message
+            Toast.makeText(currContext, "Alarm canceled", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "[${INNER_TAG}]: got active alarm canceled")
+        }
+    }
 
     private fun getTimeString(timeDiff: Long): String {
         val hours = TimeUnit.MILLISECONDS.toHours(timeDiff)
@@ -149,8 +243,9 @@ class ReminderManager private constructor(private val context: Context) {
     }
 
     fun isStopAlarmOrReminder(text: String): Boolean {
-        val keywords = listOf("stop", "cancel", "halt", "end", "terminate","Stop","Cancel","Halt","End")
-        val targets = listOf("alarm", "reminder","Alarm","Alarm!","Reminder","Reminder!")
+        val keywords =
+            listOf("stop", "cancel", "halt", "end", "terminate", "Stop", "Cancel", "Halt", "End")
+        val targets = listOf("alarm", "reminder", "Alarm", "Alarm!", "Reminder", "Reminder!")
 
         val words = text.lowercase(Locale.getDefault()).split(" ").toSet()
 
@@ -166,7 +261,8 @@ class ReminderManager private constructor(private val context: Context) {
         val hoursPattern = Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?from now")
         val minutesPattern = Pattern.compile("(\\d+)\\s?minutes?\\s?from now")
         val afterMinutesPattern = Pattern.compile("after (\\d+)\\s?(?:minutes?|mins?)")
-        val hoursMinutesPattern = Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?\\s?from now")
+        val hoursMinutesPattern =
+            Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?\\s?from now")
         val oneHourPattern = Pattern.compile("1\\s?h(?:ou)?r(?: from)? now")
         val afterOneHourPattern = Pattern.compile("after 1\\s?h(?:ou)?r")
         val secondsPattern = Pattern.compile("after (\\d+)\\s?(?:seconds?|secs?)")
@@ -174,14 +270,25 @@ class ReminderManager private constructor(private val context: Context) {
         return when {
             input.contains("tomorrow", ignoreCase = true) -> {
                 val time = input.substringAfter("tomorrow at ").trim()
-                val date = currentTime.plusDays(1).format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
+                val date =
+                    currentTime.plusDays(1).format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
                 val localDT = LocalDateTime.parse("$date $time", dateFormat)
-                Pair(localDT, "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    localDT,
+                    "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}."
+                )
             }
             hoursPattern.matcher(input).find() -> {
                 val hours = hoursPattern.matcher(input).apply { find() }.group(1).toInt()
                 val updatedTime = currentTime.plusHours(hours.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             minutesPattern.matcher(input).find() || afterMinutesPattern.matcher(input).find() -> {
                 val minutes = if (minutesPattern.matcher(input).find()) {
@@ -190,30 +297,66 @@ class ReminderManager private constructor(private val context: Context) {
                     afterMinutesPattern.matcher(input).apply { find() }.group(1).toInt()
                 }
                 val updatedTime = currentTime.plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             hoursMinutesPattern.matcher(input).find() -> {
                 val matcher = hoursMinutesPattern.matcher(input).apply { find() }
                 val hours = matcher.group(1).toInt()
                 val minutes = matcher.group(2).toInt()
-                val updatedTime = currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                val updatedTime =
+                    currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             oneHourPattern.matcher(input).find() || afterOneHourPattern.matcher(input).find() -> {
                 val updatedTime = currentTime.plusHours(1)
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             secondsPattern.matcher(input).find() -> {
                 val seconds = secondsPattern.matcher(input).apply { find() }.group(1).toInt()
                 val updatedTime = currentTime.plusSeconds(seconds.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm:ss a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm:ss a")
+                        )
+                    }."
+                )
             }
             else -> {
                 val date = input.substringAfter("on ").substringBefore(" at ").trim()
                 val time = input.substringAfter(" at ").trim()
                 if (date.isNotEmpty() && time.isNotEmpty()) {
                     val localDT = LocalDateTime.parse("$date $time", dateFormat)
-                    Pair(localDT, "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                    Pair(
+                        localDT,
+                        "OK, I have set a reminder for ${
+                            localDT.format(
+                                DateTimeFormatter.ofPattern("hh:mm a")
+                            )
+                        }."
+                    )
                 } else {
                     Pair(null, "Sorry, I couldn't understand your request.")
                 }
@@ -227,24 +370,38 @@ class ReminderManager private constructor(private val context: Context) {
         val hoursPattern = Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?from now")
         val minutesPattern = Pattern.compile("(\\d+)\\s?minutes?\\s?from now")
         val afterMinutesPattern = Pattern.compile("after (\\d+)\\s?(?:minutes?|mins?)")
-        val hoursMinutesPattern = Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?\\s?from now")
-        val hoursMinutesPattern2 = Pattern.compile("after (\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?")
+        val hoursMinutesPattern =
+            Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?\\s?from now")
+        val hoursMinutesPattern2 =
+            Pattern.compile("after (\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?")
         val oneHourPattern = Pattern.compile("1\\s?h(?:ou)?r(?: from)? now")
         val afterOneHourPattern = Pattern.compile("after 1\\s?h(?:ou)?r")
         val secondsPattern = Pattern.compile("after (\\d+)\\s?(?:seconds?|secs?)")
-        val minutesSecondsPattern = Pattern.compile("after (\\d+)\\s?(?:minutes?|mins?) and (\\d+)\\s?(?:seconds?|secs?)")
+        val minutesSecondsPattern =
+            Pattern.compile("after (\\d+)\\s?(?:minutes?|mins?) and (\\d+)\\s?(?:seconds?|secs?)")
 
         return when {
             input.contains("tomorrow", ignoreCase = true) -> {
                 val time = input.substringAfter("tomorrow at ").trim()
-                val date = currentTime.plusDays(1).format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
+                val date =
+                    currentTime.plusDays(1).format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
                 val localDT = LocalDateTime.parse("$date $time", dateFormat)
-                Pair(localDT, "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    localDT,
+                    "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}."
+                )
             }
             hoursPattern.matcher(input).find() -> {
                 val hours = hoursPattern.matcher(input).apply { find() }.group(1).toInt()
                 val updatedTime = currentTime.plusHours(hours.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             minutesPattern.matcher(input).find() || afterMinutesPattern.matcher(input).find() -> {
                 val minutes = if (minutesPattern.matcher(input).find()) {
@@ -253,44 +410,96 @@ class ReminderManager private constructor(private val context: Context) {
                     afterMinutesPattern.matcher(input).apply { find() }.group(1).toInt()
                 }
                 val updatedTime = currentTime.plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             hoursMinutesPattern.matcher(input).find() -> {
                 val matcher = hoursMinutesPattern.matcher(input).apply { find() }
                 val hours = matcher.group(1).toInt()
                 val minutes = matcher.group(2).toInt()
-                val updatedTime = currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                val updatedTime =
+                    currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             hoursMinutesPattern2.matcher(input).find() -> {
                 val matcher = hoursMinutesPattern2.matcher(input).apply { find() }
                 val hours = matcher.group(1).toInt()
                 val minutes = matcher.group(2).toInt()
-                val updatedTime = currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                val updatedTime =
+                    currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             oneHourPattern.matcher(input).find() || afterOneHourPattern.matcher(input).find() -> {
                 val updatedTime = currentTime.plusHours(1)
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             secondsPattern.matcher(input).find() -> {
                 val seconds = secondsPattern.matcher(input).apply { find() }.group(1).toInt()
                 val updatedTime = currentTime.plusSeconds(seconds.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm:ss a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm:ss a")
+                        )
+                    }."
+                )
             }
             minutesSecondsPattern.matcher(input).find() -> {
                 val matcher = minutesSecondsPattern.matcher(input).apply { find() }
                 val minutes = matcher.group(1).toInt()
                 val seconds = matcher.group(2).toInt()
-                val updatedTime = currentTime.plusMinutes(minutes.toLong()).plusSeconds(seconds.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm:ss a"))}.")
+                val updatedTime =
+                    currentTime.plusMinutes(minutes.toLong()).plusSeconds(seconds.toLong())
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm:ss a")
+                        )
+                    }."
+                )
             }
             else -> {
                 val date = input.substringAfter("on ").substringBefore(" at ").trim()
                 val time = input.substringAfter(" at ").trim()
                 if (date.isNotEmpty() && time.isNotEmpty()) {
                     val localDT = LocalDateTime.parse("$date $time", dateFormat)
-                    Pair(localDT, "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                    Pair(
+                        localDT,
+                        "OK, I have set a reminder for ${
+                            localDT.format(
+                                DateTimeFormatter.ofPattern("hh:mm a")
+                            )
+                        }."
+                    )
                 } else {
                     Pair(null, "Sorry, I couldn't understand your request.")
                 }
@@ -304,25 +513,40 @@ class ReminderManager private constructor(private val context: Context) {
         val hoursPattern = Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?from now")
         val minutesPattern = Pattern.compile("(\\d+)\\s?minutes?\\s?from now")
         val afterMinutesPattern = Pattern.compile("after (\\d+)\\s?(?:minutes?|mins?)")
-        val hoursMinutesPattern = Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?\\s?from now")
-        val hoursMinutesPattern2 = Pattern.compile("after (\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?")
+        val hoursMinutesPattern =
+            Pattern.compile("(\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?\\s?from now")
+        val hoursMinutesPattern2 =
+            Pattern.compile("after (\\d+)\\s?h(?:ou)?rs?\\s?and\\s?(\\d+)\\s?minutes?")
         val oneHourPattern = Pattern.compile("1\\s?h(?:ou)?r(?: from)? now")
         val afterOneHourPattern = Pattern.compile("after 1\\s?h(?:ou)?r")
         val secondsPattern = Pattern.compile("after (\\d+)\\s?(?:seconds?|secs?)")
-        val minutesSecondsPattern = Pattern.compile("after (\\d+)\\s?(?:minutes?|mins?) and (\\d+)\\s?(?:seconds?|secs?)")
-        val minutesWordPattern = Pattern.compile("after (one|two)\\s?(?:minutes?|mins?)", Pattern.CASE_INSENSITIVE)
+        val minutesSecondsPattern =
+            Pattern.compile("after (\\d+)\\s?(?:minutes?|mins?) and (\\d+)\\s?(?:seconds?|secs?)")
+        val minutesWordPattern =
+            Pattern.compile("after (one|two)\\s?(?:minutes?|mins?)", Pattern.CASE_INSENSITIVE)
 
         return when {
             input.contains("tomorrow", ignoreCase = true) -> {
                 val time = input.substringAfter("tomorrow at ").trim()
-                val date = currentTime.plusDays(1).format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
+                val date =
+                    currentTime.plusDays(1).format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
                 val localDT = LocalDateTime.parse("$date $time", dateFormat)
-                Pair(localDT, "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    localDT,
+                    "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}."
+                )
             }
             hoursPattern.matcher(input).find() -> {
                 val hours = hoursPattern.matcher(input).apply { find() }.group(1).toInt()
                 val updatedTime = currentTime.plusHours(hours.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             minutesPattern.matcher(input).find() || afterMinutesPattern.matcher(input).find() -> {
                 val minutes = if (minutesPattern.matcher(input).find()) {
@@ -331,37 +555,82 @@ class ReminderManager private constructor(private val context: Context) {
                     afterMinutesPattern.matcher(input).apply { find() }.group(1).toInt()
                 }
                 val updatedTime = currentTime.plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             hoursMinutesPattern.matcher(input).find() -> {
                 val matcher = hoursMinutesPattern.matcher(input).apply { find() }
                 val hours = matcher.group(1).toInt()
                 val minutes = matcher.group(2).toInt()
-                val updatedTime = currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                val updatedTime =
+                    currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             hoursMinutesPattern2.matcher(input).find() -> {
                 val matcher = hoursMinutesPattern2.matcher(input).apply { find() }
                 val hours = matcher.group(1).toInt()
                 val minutes = matcher.group(2).toInt()
-                val updatedTime = currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                val updatedTime =
+                    currentTime.plusHours(hours.toLong()).plusMinutes(minutes.toLong())
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             oneHourPattern.matcher(input).find() || afterOneHourPattern.matcher(input).find() -> {
                 val updatedTime = currentTime.plusHours(1)
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             secondsPattern.matcher(input).find() -> {
                 val seconds = secondsPattern.matcher(input).apply { find() }.group(1).toInt()
                 val updatedTime = currentTime.plusSeconds(seconds.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm:ss a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm:ss a")
+                        )
+                    }."
+                )
             }
             minutesSecondsPattern.matcher(input).find() -> {
                 val matcher = minutesSecondsPattern.matcher(input).apply { find() }
                 val minutes = matcher.group(1).toInt()
                 val seconds = matcher.group(2).toInt()
-                val updatedTime = currentTime.plusMinutes(minutes.toLong()).plusSeconds(seconds.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm:ss a"))}.")
+                val updatedTime =
+                    currentTime.plusMinutes(minutes.toLong()).plusSeconds(seconds.toLong())
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm:ss a")
+                        )
+                    }."
+                )
             }
             minutesWordPattern.matcher(input).find() -> {
                 val word = minutesWordPattern.matcher(input).apply { find() }.group(1).toLowerCase()
@@ -371,14 +640,30 @@ class ReminderManager private constructor(private val context: Context) {
                     else -> 0
                 }
                 val updatedTime = currentTime.plusMinutes(minutes.toLong())
-                Pair(updatedTime, "OK, I have set a reminder for ${updatedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Pair(
+                    updatedTime,
+                    "OK, I have set a reminder for ${
+                        updatedTime.format(
+                            DateTimeFormatter.ofPattern("hh:mm a")
+                        )
+                    }."
+                )
             }
             else -> {
-                val date = input.substringAfter("on ").substringBefore(if (input.contains(" at ")) " at " else " on ").trim()
-                val time = input.substringAfter(if (input.contains(" at ")) " at " else " on ").trim()
+                val date = input.substringAfter("on ")
+                    .substringBefore(if (input.contains(" at ")) " at " else " on ").trim()
+                val time =
+                    input.substringAfter(if (input.contains(" at ")) " at " else " on ").trim()
                 if (date.isNotEmpty() && time.isNotEmpty()) {
                     val localDT = LocalDateTime.parse("$date $time", dateFormat)
-                    Pair(localDT, "OK, I have set a reminder for ${localDT.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                    Pair(
+                        localDT,
+                        "OK, I have set a reminder for ${
+                            localDT.format(
+                                DateTimeFormatter.ofPattern("hh:mm a")
+                            )
+                        }."
+                    )
                 } else {
                     Pair(null, "Sorry, I couldn't understand your request.")
                 }

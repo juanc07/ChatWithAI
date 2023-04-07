@@ -32,6 +32,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.CountDownLatch
 
 private const val INNER_TAG = "ChatScreenFragment"
 
@@ -164,25 +168,28 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
 
                                             if(reminderManager.isStopAlarmOrReminder(firstMessage!!)){
                                                 Log.d(TAG, "[${INNER_TAG}]:recordButton detect stop alarm")
-                                                reminderManager.cancelAlarm( requireContext(),1)
+                                                reminderManager.cancelAlarm(requireContext())
                                                 UIHelper.getInstance().hideLoading()
                                                 enableDisableRecordSend(true)
                                             }else{
-                                                val (isReminder, reminderText) = checkIfReminder(
-                                                    firstMessage
-                                                )
-                                                if(isReminder){
-                                                    outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
-                                                }else{
-                                                    if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
-                                                        Log.d(TAG, "[${INNER_TAG}]:recordButton detect searching mode!!")
-                                                        startSearch(firstMessage, searchCreditPrice!!)
-                                                    }else{
-                                                        Log.d(TAG, "[${INNER_TAG}]:recordButton detect none searching mode!!")
-                                                        firstMessage?.let { actualFirstMessage ->
-                                                            startCompletion(
-                                                                actualFirstMessage, completionCreditPrice!!
-                                                            )
+                                                UIHelper.getInstance().showLoading()
+                                                checkIfReminder(firstMessage) { success, message ->
+                                                    UIHelper.getInstance().hideLoading()
+                                                    if (success) {
+                                                        // Do something with the message
+                                                        outputAIMessage(listOf(message.toString()), completionCreditPrice!!)
+                                                    } else {
+                                                        // Handle the error
+                                                        if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(firstMessage!!) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode)){
+                                                            Log.d(TAG, "[${INNER_TAG}]:recordButton detect searching mode!!")
+                                                            startSearch(firstMessage, searchCreditPrice!!)
+                                                        }else{
+                                                            Log.d(TAG, "[${INNER_TAG}]:recordButton detect none searching mode!!")
+                                                            firstMessage?.let { actualFirstMessage ->
+                                                                startCompletion(
+                                                                    actualFirstMessage, completionCreditPrice!!
+                                                                )
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -246,23 +253,28 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                             enableDisableRecordSend(false)
                             if(reminderManager.isStopAlarmOrReminder(messageText)){
                                 Log.d(TAG, "[${INNER_TAG}]:sendButton detect stop alarm")
-                                reminderManager.cancelAlarm(requireContext(),1)
+                                reminderManager.cancelAlarm(requireContext())
                                 UIHelper.getInstance().hideLoading()
                                 enableDisableRecordSend(true)
                             }else{
-                                val (isReminder, reminderText) = checkIfReminder(messageText)
-                                if(isReminder){
-                                    Log.d(TAG, "[${INNER_TAG}]:sendButton detect reminder")
-                                    outputAIMessage(listOf(reminderText.toString()), completionCreditPrice!!)
-                                }else{
-                                    Log.d(TAG, "[${INNER_TAG}]:sendButton else none reminder")
-                                    if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
-                                        Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
-                                        startSearch(messageText, searchCreditPrice!!)
-                                    }else{
-                                        Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
-                                        UIHelper.getInstance().showLoading()
-                                        startCompletion(messageText, completionCreditPrice!!)
+                                UIHelper.getInstance().showLoading()
+                                checkIfReminder(messageText) { success, message ->
+                                    UIHelper.getInstance().hideLoading()
+                                    if (success) {
+                                        // Do something with the message
+                                        Log.d(TAG, "[${INNER_TAG}]:sendButton detect reminder")
+                                        outputAIMessage(listOf(message.toString()), completionCreditPrice!!)
+                                    } else {
+                                        // Handle the error
+                                        Log.d(TAG, "[${INNER_TAG}]:sendButton else none reminder")
+                                        if(_userViewModel.getEnableSearch() == true && GoogleSearchAPI.getInstance().containsSearchKeyword(messageText) && _userViewModel.getCurrentPrompt() == getString(R.string.search_mode) ){
+                                            Log.d(TAG, "[${INNER_TAG}]:sendButton detect searching mode!!")
+                                            startSearch(messageText, searchCreditPrice!!)
+                                        }else{
+                                            Log.d(TAG, "[${INNER_TAG}]:sendButton detect none searching mode!!")
+                                            UIHelper.getInstance().showLoading()
+                                            startCompletion(messageText, completionCreditPrice!!)
+                                        }
                                     }
                                 }
                             }
@@ -350,7 +362,7 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
                         it1,
                         "AI",
                         false,
-                        true
+                        false
                     )
                 }
             if (aiResponse != null) {
@@ -743,27 +755,55 @@ class ChatScreenFragment : Fragment(),TextToSpeechListener {
         return GoogleSearchAPI.getInstance().searchGoogle(query, decryptedApiKey, _userViewModel.getSearchEngineId(),_userViewModel.getSearchNumResults()!!)
     }
 
-    fun checkIfReminder(input: String): Pair<Boolean, String?> {
-        // Parse the input to get the reminder time and message
-        val (reminderTime, reminderText) = reminderManager.parseReminderText(input)
-
-        // If the reminder time was successfully parsed, set the reminder
-        return if (reminderTime != null) {
-            val title = "Reminder!"
-            reminderManager.setReminder(reminderTime, title,1)
-
-            // Print the confirmation message
-            Log.d(TAG, "[${INNER_TAG}]:reminderTime: ${reminderTime}}!")
-            println(reminderText)
-            Log.d(TAG, "[${INNER_TAG}]:checkIfReminder: ${reminderText}}!")
-            Pair(true, reminderText)
-        } else {
-            // Print the error message
-            println(reminderText)
-            Log.d(TAG, "[${INNER_TAG}]:checkIfReminder: ${reminderText}}!")
-            Pair(false, null)
+    fun extractDateTime(message: String, callback: (LocalDateTime?) -> Unit) {
+        WitAiClient.getDateTime(message) { datetime ->
+            Log.d(TAG, "[${INNER_TAG}]:extractDateTime datetime: ${datetime}}")
+            if (datetime != null) {
+                Log.d(TAG, "[${INNER_TAG}]: got extractDateTime datetime: ${datetime}}")
+                try {
+                    val formatter = DateTimeFormatter.ISO_DATE_TIME
+                    val dateTime = LocalDateTime.parse(datetime, formatter)
+                    Log.d(TAG, "[${INNER_TAG}]: converted datetime: ${dateTime}}")
+                    val zone = ZoneId.of("America/Los_Angeles")
+                    val localDateTime = dateTime.atZone(zone).withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()
+                    Log.d(TAG, "[${INNER_TAG}]: converted localDateTime: ${localDateTime}}")
+                    callback(localDateTime)
+                } catch (e: Exception) {
+                    Log.d(TAG, "[${INNER_TAG}]:extractDateTime exception: ${e.message}}")
+                    callback(null)
+                }
+            } else {
+                callback(null)
+            }
         }
     }
+
+    fun checkIfReminder(input: String, callback: (Boolean, String?) -> Unit) {
+        // Parse the input to get the reminder time and message
+        extractDateTime(input) { dateTime ->
+            // If the reminder time was successfully parsed, set the reminder
+            if (dateTime != null) {
+                val title = "Reminder!"
+                reminderManager.setReminder(requireContext(), dateTime, title)
+
+                // Print the confirmation message
+                Log.d(TAG, "[${INNER_TAG}]: reminderTime: ${dateTime}}!")
+                println("OK, I have set a reminder for ${dateTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+                Log.d(TAG, "[${INNER_TAG}]: checkIfReminder: \"OK, I have set a reminder for ${
+                    dateTime.format(
+                        DateTimeFormatter.ofPattern("hh:mm a")
+                    )
+                }.\"!")
+                callback(true, "OK, I have set a reminder for ${dateTime.format(DateTimeFormatter.ofPattern("hh:mm a"))}.")
+            } else {
+                // Print the error message
+                println("Sorry, I couldn't understand your request.")
+                Log.d(TAG, "[${INNER_TAG}]: checkIfReminder:  \"Sorry, I couldn't understand your request.\"")
+                callback(false, null)
+            }
+        }
+    }
+
 
     override fun onSpeechDone() {
         requireActivity().runOnUiThread {
